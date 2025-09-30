@@ -1,14 +1,76 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import axios from "axios";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
+import { useAuth } from "../../context/Authcontext";
 
 export default function SignInForm() {
+  const navigate = useNavigate();
+  const { login } = useAuth(); // Usar el contexto
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/users/login/`,
+        {
+          email: email,
+          password: password,
+        }
+      );
+
+      console.log("Login exitoso:", response.data);
+
+      // Extraer token y construir objeto de usuario
+      const token = response.data.token;
+      const user = {
+        id: response.data.user_id.toString(),
+        email: response.data.email,
+        username: response.data.username || '',
+      };
+
+      if (token && user.id) {
+        login(token, user);
+        console.log("✅ Usuario autenticado con contexto");
+        
+        // Navegar al home
+        navigate("/", { replace: true });
+      } else {
+        setError("Respuesta del servidor incompleta");
+      }
+      
+    } catch (err: unknown) {
+      console.error("❌ Error en login:", err);
+      
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          setError(err.response.data.message || "Credenciales inválidas");
+        } else if (err.request) {
+          setError("No se pudo conectar con el servidor");
+        } else {
+          setError("Error al procesar la solicitud");
+        }
+      } else {
+        setError("Error desconocido");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1">
       <div className="w-full max-w-md pt-10 mx-auto">
@@ -83,13 +145,25 @@ export default function SignInForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
+              {error && (
+                <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900/20 dark:text-red-400">
+                  {error}
+                </div>
+              )}
               <div className="space-y-6">
                 <div>
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" />
+                  <Input
+                    type="email"
+                    placeholder="info@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)} 
+                    disabled={isLoading}
+                    required
+                  />
                 </div>
                 <div>
                   <Label>
@@ -99,6 +173,10 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -127,8 +205,13 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="sm"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>
               </div>
