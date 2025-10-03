@@ -1,6 +1,7 @@
 
 // src/pages/MyTickets.tsx
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/Authcontext';
 
@@ -10,14 +11,21 @@ const TicketCard = ({ ticket }: { ticket: any }) => (
       <div className="w-1/3">
         <img className="h-full w-full object-cover" src={ticket.imagen_url || '/images/cards/card-01.jpg'} alt={ticket.nombre} />
       </div>
-      <div className="w-2/3 p-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400">{new Date(ticket.fecha).toLocaleDateString('es-ES', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{ticket.nombre}</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">📍 {ticket.ubicacion}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">1 Entrada - General</p>
-        <button className="mt-4 w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Gestionar Entrada
-        </button>
+      <div className="w-2/3 p-4 flex flex-col">
+        <div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{new Date(ticket.fecha).toLocaleDateString('es-ES', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">{ticket.nombre}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">📍 {ticket.ubicacion}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">1 Entrada - General</p>
+        </div>
+        <div className="mt-auto">
+          <Link 
+            to={`/my-tickets/${ticket.id}`}
+            className="mt-4 w-full block text-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Gestionar Entrada
+          </Link>
+        </div>
       </div>
     </div>
   </div>
@@ -32,8 +40,7 @@ const MyTickets = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  // Cambiar el estado inicial del filtro a una cadena vacía para mostrar todos por defecto.
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState(''); // Default to all
 
   useEffect(() => {
     const fetchMyTickets = async () => {
@@ -44,7 +51,6 @@ const MyTickets = () => {
       }
 
       try {
-        // CORRECCIÓN: Usar el endpoint correcto que se vio en la consola.
         const apiUrl = `${import.meta.env.VITE_API_URL}/events/mis-eventos/`;
         
         const response = await axios.get(apiUrl, {
@@ -53,13 +59,10 @@ const MyTickets = () => {
           },
         });
         
-        console.log('Respuesta de la API:', response.data);
-        
         setAllTickets(response.data);
         setFilteredTickets(response.data); 
       } catch (err) {
-        console.error("Error al obtener las entradas:", err);
-        setError('No se pudieron cargar tus entradas. Revisa la consola para más detalles.');
+        setError('No se pudieron cargar tus entradas. Intenta de nuevo más tarde.');
       } finally {
         setIsLoading(false);
       }
@@ -71,18 +74,17 @@ const MyTickets = () => {
   useEffect(() => {
     let tickets = [...allTickets];
 
-    // CORRECCIÓN: Solo aplicar el filtro de estado si se ha seleccionado uno.
+    // Apply status filter only if a filter is selected
     if (filter) {
       tickets = tickets.filter(ticket => ticket.estado === filter);
     }
 
+    // Apply search term filter
     if (searchTerm) {
       tickets = tickets.filter(ticket =>
         ticket.nombre.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
-    console.log(`Filtrando por estado: '${filter || 'Todos'}'. Entradas encontradas:`, tickets);
 
     setFilteredTickets(tickets);
   }, [filter, searchTerm, allTickets]);
@@ -99,8 +101,8 @@ const MyTickets = () => {
             onChange={e => setFilter(e.target.value)}
             className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 text-gray-900 dark:text-white"
           >
-            {/* CORRECCIÓN: Añadir opción para ver todos los estados */}
             <option value="">Todos</option>
+            {/* CORRECCIÓN: Usar valores con mayúscula inicial para que coincidan con la BD */}
             <option value="Confirmado">Confirmado</option>
             <option value="Planeado">Planeado</option>
             <option value="Cancelado">Cancelado</option>
