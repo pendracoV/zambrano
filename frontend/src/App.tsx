@@ -21,6 +21,7 @@ import Home from "./pages/Dashboard/Home";
 import { ProtectedRoute, PublicRoute } from "./routes/AppRoutes";
 import { AuthProvider } from "./context/Authcontext";
 import LandingPage from "./pages/Landing";
+import AllEventsPage from "./pages/Events/AllEventsPage";
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
 
               {/* Others Page */}
               <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/events" element={<AllEventsPage />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
 
