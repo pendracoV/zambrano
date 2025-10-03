@@ -22,6 +22,7 @@ import { ProtectedRoute, PublicRoute } from "./routes/AppRoutes";
 import { AuthProvider } from "./context/Authcontext";
 import LandingPage from "./pages/Landing";
 import AllEventsPage from "./pages/Events/AllEventsPage";
+import EventDetailPage from "./pages/Events/EventDetailPage";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
               {/* Others Page */}
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/events" element={<AllEventsPage />} />
+              <Route path="/events/:id" element={<EventDetailPage />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
 
