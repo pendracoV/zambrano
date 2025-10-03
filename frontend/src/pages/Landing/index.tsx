@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../context/Authcontext';
+import UserDropdown from '../../components/header/UserDropdown';
 
-// Importaremos los componentes del Header y Footer aquí
-// import LandingHeader from '../../layout/LandingHeader';
-// import LandingFooter from '../../layout/LandingFooter';
-
-// Placeholder para el componente de la tarjeta de evento
+// Componente de tarjeta de evento actualizado para coincidir con los datos de la API
 const EventCard = ({ event }: any) => (
-  <div className="border rounded-lg p-4 shadow-lg">
-    <img src={event.image} alt={event.name} className="w-full h-48 object-cover rounded-t-lg" />
-    <div className="p-4">
-      <p className="text-sm text-gray-500">{event.date}</p>
-      <h3 className="text-xl font-bold mt-2">{event.name}</h3>
-      <p className="text-gray-600 mt-1">{event.location}</p>
-      <p className="text-lg font-semibold mt-2">{event.price === 0 ? 'Gratis' : `${event.price}`}</p>
+  <div className="border rounded-lg p-4 shadow-lg flex flex-col h-full">
+    {/* Usamos 'event.imagen' y un fallback por si no viene la imagen */}
+    <img src={event.imagen || '/images/carousel/carousel-01.png'} alt={event.nombre} className="w-full h-48 object-cover rounded-t-lg" />
+    <div className="p-4 flex flex-col flex-grow">
+      {/* Usamos 'event.fecha' para la fecha */}
+      <p className="text-sm text-gray-500">{new Date(event.fecha).toLocaleDateString()}</p>
+      {/* Usamos 'event.nombre' para el nombre */}
+      <h3 className="text-xl font-bold mt-2 flex-grow">{event.nombre}</h3>
+      {/* Asumimos 'event.ubicacion' para la ubicación */}
+      <p className="text-gray-600 mt-1">{event.ubicacion}</p>
+      {/* Asumimos 'event.precio' para el precio */}
+      <p className="text-lg font-semibold mt-2">{event.precio == 0 ? 'Gratis' : `${event.precio}`}</p>
       <button className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
         Ver Detalles
       </button>
@@ -22,33 +26,28 @@ const EventCard = ({ event }: any) => (
 );
 
 const LandingPage = () => {
-  // Datos de muestra para los eventos 
-  const upcomingEvents = [
-    {
-      id: 1,
-      name: 'Conferencia de Tecnología 2025',
-      date: '15/11/2025',
-      location: 'Centro de Convenciones Metropolitano',
-      price: 75,
-      image: '/images/carousel/carousel-01.png',
-    },
-    {
-      id: 2,
-      name: 'Festival de Música Indie',
-      date: '22/11/2025',
-      location: 'Parque de la Ciudad',
-      price: 40,
-      image: '/images/carousel/carousel-02.png',
-    },
-    {
-      id: 3,
-      name: 'Taller de Cocina Internacional',
-      date: '30/11/2025',
-      location: 'Escuela Culinaria "El Sabor"',
-      price: 0,
-      image: '/images/carousel/carousel-03.png',
-    },
-  ];
+  const { isAuthenticated } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        // Asumimos que el endpoint para eventos es /events/
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/events/`);
+        // El console.log ya no es necesario
+        setEvents(response.data);
+      } catch (err) {
+        setError('No se pudieron cargar los eventos. Intente de nuevo más tarde.');
+        console.error("Error fetching events:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []); // El array vacío asegura que esto se ejecute solo una vez
 
   const scrollToEvents = () => {
     const eventsSection = document.getElementById('events-section');
@@ -59,7 +58,7 @@ const LandingPage = () => {
 
   return (
     <div className="bg-gray-100 text-gray-800">
-      {/* Sección 1: Barra de Navegación (Placeholder) */}
+      {/* Sección 1: Barra de Navegación */}
       <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50 p-4 flex justify-between items-center">
         <div className="text-2xl font-bold text-blue-600">Gestify</div>
         <nav>
@@ -67,9 +66,20 @@ const LandingPage = () => {
           <a href="#events" onClick={(e) => { e.preventDefault(); scrollToEvents(); }} className="mx-2">Eventos</a>
           <a href="#organizer" className="mx-2">¿Eres Organizador?</a>
         </nav>
-        <div>
-          <Link to="/signin" className="mx-2">Iniciar Sesión</Link>
-          <Link to="/signup" className="mx-2 bg-blue-500 text-white py-2 px-4 rounded">Registrarse</Link>
+        <div className="flex items-center gap-4">
+          {isAuthenticated ? (
+            <>
+              <Link to="/dashboard" className="hidden sm:block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+                Ir al Dashboard
+              </Link>
+              <UserDropdown />
+            </>
+          ) : (
+            <>
+              <Link to="/signin" className="mx-2">Iniciar Sesión</Link>
+              <Link to="/signup" className="mx-2 bg-blue-500 text-white py-2 px-4 rounded">Registrarse</Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -88,14 +98,22 @@ const LandingPage = () => {
       {/* Sección 3: Próximos Eventos */}
       <section id="events-section" className="py-20 px-4">
         <h2 className="text-4xl font-bold text-center mb-12">Próximos Eventos</h2>
-        <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {upcomingEvents.map(event => (
-            <EventCard key={event.id} event={event} />
-          ))}
+        <div className="container mx-auto">
+          {isLoading ? (
+            <p className="text-center text-lg">Cargando eventos...</p>
+          ) : error ? (
+            <p className="text-center text-lg text-red-500">No se pudieron cargar los eventos. Intente de nuevo más tarde.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {events.map(event => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Sección 4: Pie de Página (Placeholder) */}
+      {/* Sección 4: Pie de Página */}
       <footer className="bg-gray-800 text-white py-10 px-4">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-center md:text-left">
           <div>
