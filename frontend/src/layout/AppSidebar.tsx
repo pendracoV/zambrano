@@ -13,6 +13,7 @@ import {
   PieChartIcon,
   PlugInIcon,
   TableIcon,
+  TaskIcon,
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
@@ -35,6 +36,11 @@ const navItems: NavItem[] = [
     icon: <ListIcon />,
     name: "Eventos",
     path: "/events",
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Mis Entradas",
+    path: "/my-tickets",
   },
   {
     icon: <CalenderIcon />,
