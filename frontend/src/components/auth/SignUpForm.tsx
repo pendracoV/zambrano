@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
@@ -10,16 +10,17 @@ export default function SignUpForm() {
   const [isChecked, setIsChecked] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: ""
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -33,7 +34,7 @@ export default function SignUpForm() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
     setSuccessMessage("");
@@ -63,7 +64,7 @@ export default function SignUpForm() {
       } else {
         // Registro exitoso
         setSuccessMessage("Account created successfully!");
-        setFormData({ username: "", name: "", email: "", password: "" });
+        setFormData({ username: "", first_name: "", last_name: "", email: "", password: "" });
         setIsChecked(false);
         // Aquí puedes redirigir o realizar otra acción
         // setTimeout(() => navigate("/signin"), 2000);
@@ -134,23 +135,44 @@ export default function SignUpForm() {
                   )}
                 </div>
 
-                {/* Full Name */}
+                {/* First Name */}
                 <div>
                   <Label>
-                    Full Name<span className="text-error-500">*</span>
+                    First Name<span className="text-error-500">*</span>
                   </Label>
                   <Input
                     type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    id="first_name"
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleInputChange}
-                    placeholder="Enter your full name"
-                    className={errors.name ? "border-red-500" : ""}
+                    placeholder="Enter your first name"
+                    className={errors.first_name ? "border-red-500" : ""}
                   />
-                  {errors.name && (
+                  {errors.first_name && (
                     <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                      {errors.name[0]}
+                      {errors.first_name[0]}
+                    </p>
+                  )}
+                </div>
+
+                {/* Last Name */}
+                <div>
+                  <Label>
+                    Last Name<span className="text-error-500">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    id="last_name"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    placeholder="Enter your last name"
+                    className={errors.last_name ? "border-red-500" : ""}
+                  />
+                  {errors.last_name && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                      {errors.last_name[0]}
                     </p>
                   )}
                 </div>
@@ -209,23 +231,25 @@ export default function SignUpForm() {
                   )}
                 </div>
 
-                {/* Checkbox */}
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    className="w-5 h-5"
-                    checked={isChecked}
-                    onChange={setIsChecked}
-                  />
-                  <p className="inline-block text-sm font-normal text-gray-500 dark:text-gray-400">
-                    By creating an account means you agree to the{" "}
-                    <span className="text-gray-800 dark:text-white/90">
-                      Terms and Conditions,
-                    </span>{" "}
-                    and our{" "}
-                    <span className="text-gray-800 dark:text-white">
-                      Privacy Policy
+                {/* Terms and Conditions Checkbox */}
+                <div>
+                  <label className="flex items-start cursor-pointer">
+                    <div className="relative">
+                      <Checkbox
+                        checked={isChecked}
+                        onChange={(checked: boolean) => setIsChecked(checked)}
+                      />
+                    </div>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-400">
+                      I agree to the{" "}
+                      <Link
+                        to="/terms"
+                        className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                      >
+                        Terms and Conditions
+                      </Link>
                     </span>
-                  </p>
+                  </label>
                 </div>
 
                 {/* Button */}
