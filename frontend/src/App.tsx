@@ -25,6 +25,7 @@ import AllEventsPage from "./pages/Events/AllEventsPage";
 import EventDetailPage from "./pages/Events/EventDetailPage";
 import MyTickets from "./pages/MyTickets";
 import TicketDetailPage from "./pages/TicketDetailPage";
+import TicketTypeManagement from "./pages/TicketTypeManagement";
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/events/:id" element={<EventDetailPage />} />
               <Route path="/my-tickets" element={<MyTickets />} />
               <Route path="/my-tickets/:id" element={<TicketDetailPage />} />
+              <Route path="/ticket-types" element={<TicketTypeManagement />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
 

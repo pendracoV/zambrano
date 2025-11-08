@@ -43,6 +43,11 @@ const navItems: NavItem[] = [
     path: "/my-tickets",
   },
   {
+    icon: <PageIcon />,
+    name: "Gestión de Tipos de Boleta",
+    path: "/ticket-types",
+  },
+  {
     icon: <CalenderIcon />,
     name: "Calendar",
     path: "/calendar",

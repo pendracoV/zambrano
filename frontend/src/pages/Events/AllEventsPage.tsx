@@ -47,39 +47,75 @@ const AllEventsPage = () => {
     fetchEvents();
   }, []);
 
-  const handleApplyFilters = useCallback(() => {
-    let events = [...allEvents];
+// Helper para limpiar y obtener el precio (deberías moverlo a un archivo de utils)
+  const getCleanPrice = (priceStr: string | number): number => {
+    if (!priceStr) return NaN;
+    const cleaned = priceStr.toString().replace(/[\.,\s]/g, ''); 
+    return parseFloat(cleaned);
+  };
 
-    // Filtro por nombre
-    if (filters.search) {
-      events = events.filter(event => 
-        event.nombre.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
+  // Helper para encontrar el precio más bajo de un evento
+  const getLowestPrice = (event: any): number | null => {
+    if (!event.types_of_tickets_available || event.types_of_tickets_available.length === 0) {
+      return null;
+    }
+    const prices = event.types_of_tickets_available.map((ticket_type: any) => 
+      getCleanPrice(ticket_type.price)
+    );
+    const validPrices = prices.filter((p: number) => !isNaN(p));
+    return validPrices.length > 0 ? Math.min(...validPrices) : null;
+  };
 
-    // Filtro por ciudad
-    if (filters.city && filters.city !== 'Todas') {
-      events = events.filter(event => event.ubicacion === filters.city);
-    }
+const handleApplyFilters = useCallback(() => {
+    let events = [...allEvents];
+    const minPrice = parseFloat(filters.minPrice);
+    const maxPrice = parseFloat(filters.maxPrice);
 
-    // Filtro por fecha
-    if (filters.dateFrom) {
-      events = events.filter(event => new Date(event.fecha) >= new Date(filters.dateFrom));
-    }
-    if (filters.dateTo) {
-      events = events.filter(event => new Date(event.fecha) <= new Date(filters.dateTo));
-    }
+    // Filtro por nombre
+    if (filters.search) {
+      events = events.filter(event => 
+        event.event_name.toLowerCase().includes(filters.search.toLowerCase()) // CAMBIO: 'nombre' -> 'event_name'
+      );
+    }
 
-    // Filtro por precio
-    if (filters.minPrice) {
-      events = events.filter(event => event.precio >= parseFloat(filters.minPrice));
-    }
-    if (filters.maxPrice) {
-      events = events.filter(event => event.precio <= parseFloat(filters.maxPrice));
-    }
+    // Filtro por ciudad
+    if (filters.city && filters.city !== 'Todas') {
+      events = events.filter(event => event.city === filters.city); // CAMBIO: 'ubicacion' -> 'city'
+    }
 
-    setFilteredEvents(events);
-  }, [filters, allEvents]);
+    // Filtro por Género (Categoría)
+    if (filters.genre && filters.genre !== 'Todos') {
+      events = events.filter(event => event.category === filters.genre); // CAMBIO: Nuevo filtro para 'category'
+    }
+
+    // Filtro por fecha
+    if (filters.dateFrom) {
+      // Comparamos la fecha de inicio del evento
+      events = events.filter(event => new Date(event.start_datetime) >= new Date(filters.dateFrom)); // CAMBIO: 'fecha' -> 'start_datetime'
+    }
+    if (filters.dateTo) {
+      // Comparamos la fecha de inicio del evento
+      events = events.filter(event => new Date(event.start_datetime) <= new Date(filters.dateTo)); // CAMBIO: 'fecha' -> 'start_datetime'
+    }
+
+    // Filtro por precio
+    events = events.filter(event => {
+      const lowestPrice = getLowestPrice(event);
+      if (lowestPrice === null) return false; // O true, si quieres mostrar eventos sin precio
+
+      // Chequeo de Precio Mínimo
+      if (!isNaN(minPrice) && lowestPrice < minPrice) {
+        return false;
+      }
+      // Chequeo de Precio Máximo
+      if (!isNaN(maxPrice) && lowestPrice > maxPrice) {
+        return false;
+      }
+      return true;
+    });
+
+    setFilteredEvents(events);
+  }, [filters, allEvents]);
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);

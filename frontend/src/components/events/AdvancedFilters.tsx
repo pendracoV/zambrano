@@ -38,15 +38,18 @@ const AdvancedFilters = ({ filters, setFilters, onApply, onClear }: any) => {
           </select>
         </div>
 
-        <div>
-          <label htmlFor="genre" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género</label>
-          <select id="genre" value={filters.genre} onChange={handleInputChange} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 p-2 focus:ring-brand-500 focus:border-brand-500">
-            <option>Todos</option>
-            <option>Rock</option>
-            <option>Pop</option>
-            <option>Electrónica</option>
-          </select>
-        </div>
+<div>
+          <label htmlFor="genre" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Género</label>
+          <select id="genre" value={filters.genre} onChange={handleInputChange} className="...">
+            <option value="Todos">Todos</option>
+            <option value="musica">Música</option>
+            <option value="deporte">Deporte</option>
+            <option value="educacion">Educación</option>
+            <option value="tecnologia">Tecnología</option>
+            <option value="arte">Arte</option>
+            <option value="otros">Otros</option>
+          </select>
+        </div>
 
         <div>
           <label htmlFor="minPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Precio Mín.</label>
