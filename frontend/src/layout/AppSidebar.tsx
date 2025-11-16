@@ -38,6 +38,11 @@ const navItems: NavItem[] = [
     path: "/events",
   },
   {
+    icon: <PageIcon />,
+    name: "Creación de evento",
+    path: "/create-event",
+  },
+  {
     icon: <TaskIcon />,
     name: "Mis Entradas",
     path: "/my-tickets",

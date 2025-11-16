@@ -16,6 +16,7 @@ const TicketTypeManagement = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentTicketType, setCurrentTicketType] = useState<any>(null);
   const [formData, setFormData] = useState({ ticket_name: '', description: '' });
+  const [formError, setFormError] = useState<string | null>(null); // Estado para errores de formulario
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchTicketTypes = async () => {
@@ -27,7 +28,7 @@ const TicketTypeManagement = () => {
 
     try {
       setIsLoading(true);
-      const apiUrl = `${import.meta.env.VITE_API_URL}/tipos-boletas/`;
+      const apiUrl = `${import.meta.env.VITE_API_URL}/ticket-types/`;
       const response = await axios.get(apiUrl, {
         headers: {
           Authorization: `Token ${token}`,
@@ -55,6 +56,7 @@ const TicketTypeManagement = () => {
 
   const handleOpenCreateModal = () => {
     setIsEditMode(false);
+    setFormError(null); // Limpiar errores al abrir
     setFormData({ ticket_name: '', description: '' });
     setCurrentTicketType(null);
     openFormModal();
@@ -62,6 +64,7 @@ const TicketTypeManagement = () => {
 
   const handleOpenEditModal = (ticketType: any) => {
     setIsEditMode(true);
+    setFormError(null); // Limpiar errores al abrir
     setFormData({ ticket_name: ticketType.ticket_name, description: ticketType.description });
     setCurrentTicketType(ticketType);
     openFormModal();
@@ -78,11 +81,12 @@ const TicketTypeManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null); // Limpiar error previo
     if (!token) return;
 
     const url = isEditMode
-      ? `${import.meta.env.VITE_API_URL}/tipos-boletas/${currentTicketType.id}/`
-      : `${import.meta.env.VITE_API_URL}/tipos-boletas/`;
+      ? `${import.meta.env.VITE_API_URL}/ticket-types/${currentTicketType.id}/`
+      : `${import.meta.env.VITE_API_URL}/ticket-types/`;
     
     const method = isEditMode ? 'put' : 'post';
 
@@ -95,7 +99,13 @@ const TicketTypeManagement = () => {
       closeFormModal();
       fetchTicketTypes(); // Refresh data
     } catch (err) {
-      console.error('Failed to save ticket type', err);
+      // Mostrar error al usuario
+      if (axios.isAxiosError(err) && err.response) {
+        // Puedes ser más específico si tu API devuelve mensajes de error claros
+        setFormError(`Error: ${Object.values(err.response.data).join(', ')}`);
+      } else {
+        setFormError('No se pudo guardar el tipo de boleta. Inténtalo de nuevo.');
+      }
     }
   };
 
@@ -103,7 +113,7 @@ const TicketTypeManagement = () => {
     if (!token || !currentTicketType) return;
 
     try {
-      const url = `${import.meta.env.VITE_API_URL}/tipos-boletas/${currentTicketType.id}/`;
+      const url = `${import.meta.env.VITE_API_URL}/ticket-types/${currentTicketType.id}/`;
       await axios.delete(url, {
         headers: {
           Authorization: `Token ${token}`,
@@ -112,7 +122,8 @@ const TicketTypeManagement = () => {
       closeDeleteModal();
       fetchTicketTypes(); // Refresh data
     } catch (err) {
-      console.error('Failed to delete ticket type', err);
+      // Aquí podrías usar un sistema de notificaciones (toasts) para informar del error
+      alert('No se pudo eliminar el tipo de boleta. Puede que esté en uso.');
     }
   };
 
@@ -169,6 +180,9 @@ const TicketTypeManagement = () => {
 
       <Modal isOpen={isFormOpen} onClose={closeFormModal} title={isEditMode ? 'Editar Tipo de Boleta' : 'Crear Tipo de Boleta'}>
         <form onSubmit={handleSubmit}>
+          {formError && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{formError}</div>
+          )}
           <div className="mb-4">
             <label htmlFor="ticket_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Boleta</label>
             <input
