@@ -27,6 +27,8 @@ import EventDetailPage from "./pages/Events/EventDetailPage";
 import MyTickets from "./pages/MyTickets";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import TicketTypeManagement from "./pages/TicketTypeManagement";
+import MyEvents from "./pages/Events/MyEvents";
+import EditEvent from "./pages/Events/EditEvent";
 
 export default function App() {
   return (
@@ -50,6 +52,8 @@ export default function App() {
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/events" element={<AllEventsPage />} />
               <Route path="/create-event" element={<CreateEvent />} />
+              <Route path="/admin/events" element={<MyEvents />} />
+              <Route path="/organizer/events/:id/edit" element={<EditEvent />} />
               <Route path="/events/:id" element={<EventDetailPage />} />
               <Route path="/my-tickets" element={<MyTickets />} />
               <Route path="/my-tickets/:id" element={<TicketDetailPage />} />
