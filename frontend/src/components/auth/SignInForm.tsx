@@ -18,12 +18,13 @@ export default function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
+      // --- PASO 1: Login (igual que antes) ---
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/users/login/`,
         {
@@ -32,27 +33,33 @@ export default function SignInForm() {
         }
       );
 
-      console.log("Login exitoso:", response.data);
-
-      // Extraer token y construir objeto de usuario
       const token = response.data.token;
-      const user = {
-        id: response.data.user_id.toString(),
-        email: response.data.email,
-        username: response.data.username || '',
-      };
-
-      if (token && user.id) {
-        login(token, user);
-        console.log("✅ Usuario autenticado con contexto");
-        
-        // Navegar al home
-        navigate("/", { replace: true });
-      } else {
-        setError("Respuesta del servidor incompleta");
+      if (!token) {
+        throw new Error("Respuesta del servidor incompleta (no hay token)");
       }
+
+      // --- PASO 2: (¡NUEVO!) Pedir el perfil completo ---
+      // Usamos el token que acabamos de recibir
+      const profileResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL}/users/profile/`,
+        {
+          headers: { Authorization: `Token ${token}` }
+        }
+      );
+      
+      // 'fullUser' SÍ tiene "is_superuser", "is_staff", "first_name", etc.
+      const fullUser = profileResponse.data;
+
+      // --- PASO 3: Guardar el token Y el perfil completo ---
+      login(token, fullUser); 
+      
+      console.log("✅ Usuario autenticado con perfil completo:", fullUser);
+      
+      // Navegar al home
+      navigate("/", { replace: true });
       
     } catch (err: unknown) {
+      // ... (tu manejo de error se queda igual)
       console.error("❌ Error en login:", err);
       
       if (axios.isAxiosError(err)) {
@@ -167,4 +174,4 @@ export default function SignInForm() {
       </div>
     </div>
   );
-}
+} 
