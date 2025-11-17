@@ -288,7 +288,7 @@ const EditEvent = () => {
       }
 
       alert('¡Evento actualizado exitosamente!');
-      navigate('/admin/events');
+      navigate('/organizer/my-events');
 
     } catch (err: any) {
       setError(err.message);
@@ -314,7 +314,7 @@ const EditEvent = () => {
         }
 
         alert('¡Evento eliminado exitosamente!');
-        navigate('/admin/events');
+        navigate('/organizer/my-events');
 
       } catch (err: any) {
         setError(err.message);

@@ -43,6 +43,11 @@ const navItems: NavItem[] = [
     path: "/create-event",
   },
   {
+    icon: <ListIcon />,
+    name: "Mis Eventos",
+    path: "/organizer/my-events",
+  },
+  {
     icon: <TaskIcon />,
     name: "Mis Entradas",
     path: "/my-tickets",
