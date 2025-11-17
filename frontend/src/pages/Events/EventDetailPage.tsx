@@ -4,8 +4,8 @@ import axios from 'axios';
 import { CalenderIcon } from '../../icons';
 
 // ✅ OPCIÓN 2: Importar imágenes (recomendada por Vite/React)
-import defaultEventImage from '/images/1.jpg';
 
+import defaultEventImage from '/public/images/1.jpg';
 const defaultImages: { [key: string]: string } = {
   musica: defaultEventImage,
   deporte: defaultEventImage,
