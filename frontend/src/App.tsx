@@ -30,6 +30,9 @@ import TicketTypeManagement from "./pages/TicketTypeManagement";
 import MyEvents from "./pages/Events/MyEvents";
 import EditEvent from "./pages/Events/EditEvent";
 import ManageEvent from "./pages/Events/ManageEvent";
+import UserManagement from "./pages/admin/UserManagement";
+import PaymentSuccess from './pages/PaymentSuccess'; // Importa las nuevas páginas
+import PaymentFailed from './pages/PaymentFailed';
 
 export default function App() {
   return (
@@ -49,6 +52,9 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Home />} />
 
+              {/* Admin */}
+              <Route path="/admin/user-management" element={<UserManagement />} />
+
               {/* Others Page */}
               <Route path="/profile" element={<UserProfiles />} />
               <Route path="/events" element={<AllEventsPage />} />
@@ -62,6 +68,8 @@ export default function App() {
               <Route path="/ticket-types" element={<TicketTypeManagement />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/blank" element={<Blank />} />
+              <Route path="/compra/exitosa" element={<PaymentSuccess />} />
+              <Route path="/compra/fallida" element={<PaymentFailed />} />
 
               {/* Forms */}
               <Route path="/form-elements" element={<FormElements />} />

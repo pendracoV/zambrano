@@ -30,42 +30,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Cargar datos del localStorage al iniciar
   useEffect(() => {
-    const loadUserFromToken = async () => {
-      const storedToken = localStorage.getItem('authToken');
+    const storedToken = localStorage.getItem('authToken');
+    const storedUser = localStorage.getItem('user');
 
-      if (storedToken) {
-        try {
-          // 1. Poner el token en el estado de React
-          setToken(storedToken);
-
-          // 2. Usar el token para pedir el perfil fresco
-          const profileResponse = await axios.get(
-            `${import.meta.env.VITE_API_URL}/users/profile/`,
-            {
-              headers: { Authorization: `Token ${storedToken}` }
-            }
-          );
-
-          // 3. Guardar el usuario completo en el estado y localStorage
-          const fullUser = profileResponse.data;
-          setUser(fullUser);
-          localStorage.setItem('user', JSON.stringify(fullUser)); // Actualizamos el storage
-
-        } catch (error) {
-          // El token era inválido (expiró, etc.)
-          console.error('Error cargando perfil con token:', error);
-          // Limpiamos todo
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
-          setToken(null);
-          setUser(null);
-        }
+    if (storedToken && storedUser) {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
       }
-      setIsLoading(false);
-    };
-
-    loadUserFromToken();
-  }, []); // Se ejecuta solo una vez al cargar la app
+    }
+    setIsLoading(false);
+  }, []);
 
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem('authToken', newToken);

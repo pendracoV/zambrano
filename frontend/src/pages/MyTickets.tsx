@@ -16,11 +16,11 @@ const defaultImages: { [key: string]: string } = {
 
 // --- COMPONENTE TicketCard CON LA LÓGICA CORREGIDA ---
 const TicketCard = ({ event, ticket }: { event: any, ticket: any }) => {
-  console.log("DATOS RECIBIDOS EN TICKETCARD:", { 
-    id: event.event_id, 
-    image: event.image, 
-    category: event.category 
-  });
+  //console.log("DATOS RECIBIDOS EN TICKETCARD:", { 
+   // id: event.event_id, 
+   // image: event.image, 
+    //category: event.category 
+  //});
   // --- LÓGICA DE IMAGEN CORREGIDA ---
   // Aplicamos la misma lógica robusta de EventDetailPage.tsx
   let imageUrl: string | null = null;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
@@ -17,65 +17,103 @@ import {
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
+import { useAuth } from "../context/Authcontext"; // ⭐ NUEVO
 import SidebarWidget from "./SidebarWidget";
 
+// ⭐ ACTUALIZADO: Agregamos roles a NavItem y SubItem
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  roles?: string[]; // Roles permitidos para ver este item
+  subItems?: { 
+    name: string; 
+    path: string; 
+    pro?: boolean; 
+    new?: boolean;
+    roles?: string[]; // Roles permitidos para subitems
+  }[];
 };
 
+// ⭐ ACTUALIZADO: Agregamos roles a cada item del menú
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/dashboard", pro: false }],
+    subItems: [{ 
+      name: "Ecommerce", 
+      path: "/dashboard", 
+      pro: false 
+    }],
+    // Sin roles = accesible para todos los usuarios autenticados
   },
   {
     icon: <ListIcon />,
     name: "Eventos",
     path: "/events",
+    // Sin roles = accesible para todos
   },
   {
     icon: <PageIcon />,
     name: "Creación de evento",
     path: "/create-event",
+    roles: ["Administrador", "Organizador"], // ⚠️ Solo estos roles
   },
   {
     icon: <ListIcon />,
     name: "Mis Eventos",
     path: "/organizer/my-events",
+    roles: ["Administrador", "Organizador"], // ⚠️ Solo organizadores
   },
   {
     icon: <TaskIcon />,
     name: "Mis Entradas",
     path: "/my-tickets",
+    roles: ["Participante", "Organizador", "Administrador"], // Usuarios que participan
   },
   {
     icon: <PageIcon />,
     name: "Gestión de Tipos de Boleta",
     path: "/ticket-types",
+    roles: ["Administrador", "Staff"], // ⚠️ Solo admin/staff
   },
   {
     icon: <CalenderIcon />,
     name: "Calendar",
     path: "/calendar",
+    // Sin roles = accesible para todos
   },
   {
     icon: <UserCircleIcon />,
     name: "User Profile",
     path: "/profile",
+    // Sin roles = accesible para todos
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Admin Users",
+    path: "/admin/user-management",
+    roles: ["Administrador"], // ⚠️ Solo administradores
   },
   {
     name: "Forms",
     icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+    subItems: [{ 
+      name: "Form Elements", 
+      path: "/form-elements", 
+      pro: false 
+    }],
+    roles: ["Administrador", "Staff"], // Ejemplo: solo para admin/staff
   },
   {
     name: "Tables",
     icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    subItems: [{ 
+      name: "Basic Tables", 
+      path: "/basic-tables", 
+      pro: false 
+    }],
+    roles: ["Administrador", "Staff"], // Ejemplo
   },
   {
     name: "Pages",
@@ -84,6 +122,7 @@ const navItems: NavItem[] = [
       { name: "Blank Page", path: "/blank", pro: false },
       { name: "404 Error", path: "/error-404", pro: false },
     ],
+    // Sin roles = accesible para todos
   },
 ];
 
@@ -95,6 +134,7 @@ const othersItems: NavItem[] = [
       { name: "Line Chart", path: "/line-chart", pro: false },
       { name: "Bar Chart", path: "/bar-chart", pro: false },
     ],
+    roles: ["Administrador", "Staff"], // Ejemplo
   },
   {
     icon: <BoxCubeIcon />,
@@ -107,6 +147,7 @@ const othersItems: NavItem[] = [
       { name: "Images", path: "/images", pro: false },
       { name: "Videos", path: "/videos", pro: false },
     ],
+    roles: ["Administrador", "Staff"], // Ejemplo
   },
   {
     icon: <PlugInIcon />,
@@ -115,11 +156,13 @@ const othersItems: NavItem[] = [
       { name: "Sign In", path: "/signin", pro: false },
       { name: "Sign Up", path: "/signup", pro: false },
     ],
+    // Sin roles = accesible para todos (páginas públicas)
   },
 ];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { user } = useAuth(); // ⭐ NUEVO: Obtener usuario actual
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -131,16 +174,69 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
+  // ⭐ NUEVA FUNCIÓN: Verificar si el usuario tiene acceso
+  const hasAccess = useCallback((itemRoles?: string[]): boolean => {
+    // Si no se especifican roles, es accesible para todos los autenticados
+    if (!itemRoles || itemRoles.length === 0) return true;
+    
+    // Si no hay usuario logueado o no tiene roles, no tiene acceso
+    if (!user || !user.role || !Array.isArray(user.role)) return false;
+    
+    // Verificar si el usuario tiene AL MENOS uno de los roles requeridos
+    return user.role.some(userRole => itemRoles.includes(userRole));
+  }, [user]);
+
+  // ⭐ NUEVO: Filtrar items del menú según roles del usuario
+  const filteredNavItems = navItems
+    .filter(item => hasAccess(item.roles))
+    .map(item => ({
+      ...item,
+      // Si tiene subItems, filtrarlos también por roles
+      subItems: item.subItems?.filter(subItem => hasAccess(subItem.roles))
+    }))
+    // Eliminar items que quedaron sin subItems si originalmente los tenían
+    .filter(item => !item.subItems || item.subItems.length > 0);
+
+  const filteredOthersItems = othersItems
+    .filter(item => hasAccess(item.roles))
+    .map(item => ({
+      ...item,
+      subItems: item.subItems?.filter(subItem => hasAccess(subItem.roles))
+    }))
+    .filter(item => !item.subItems || item.subItems.length > 0);
+
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
   );
 
+  // ⭐ ARREGLADO: Memoizar los items filtrados para evitar recreación infinita
+  const memoizedFilteredNavItems = useMemo(() => 
+    navItems
+      .filter(item => hasAccess(item.roles))
+      .map(item => ({
+        ...item,
+        subItems: item.subItems?.filter(subItem => hasAccess(subItem.roles))
+      }))
+      .filter(item => !item.subItems || item.subItems.length > 0),
+    [hasAccess]
+  );
+
+  const memoizedFilteredOthersItems = useMemo(() =>
+    othersItems
+      .filter(item => hasAccess(item.roles))
+      .map(item => ({
+        ...item,
+        subItems: item.subItems?.filter(subItem => hasAccess(subItem.roles))
+      }))
+      .filter(item => !item.subItems || item.subItems.length > 0),
+    [hasAccess]
+  );
+
   useEffect(() => {
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+      const items = menuType === "main" ? memoizedFilteredNavItems : memoizedFilteredOthersItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
@@ -159,7 +255,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [location, isActive]);
+  }, [location, isActive, memoizedFilteredNavItems, memoizedFilteredOthersItems]);
 
   useEffect(() => {
     if (openSubmenu !== null) {
@@ -374,24 +470,27 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(memoizedFilteredNavItems, "main")}
             </div>
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+            {/* ⭐ Solo mostrar sección "Others" si hay items filtrados */}
+            {memoizedFilteredOthersItems.length > 0 && (
+              <div className="">
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Others"
+                  ) : (
+                    <HorizontaLDots />
+                  )}
+                </h2>
+                {renderMenuItems(memoizedFilteredOthersItems, "others")}
+              </div>
+            )}
           </div>
         </nav>
         {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}

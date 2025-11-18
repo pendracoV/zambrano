@@ -103,7 +103,7 @@ const MyEvents = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  console.log("Datos del usuario en AuthContext:", user);
+  //console.log("Datos del usuario en AuthContext:", user);
 
   // --- CAMBIO: Determinar si es Admin ---
   // Asumo que tu objeto 'user' tiene 'is_staff' (común en Django)

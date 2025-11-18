@@ -16,22 +16,15 @@ const CreateEvent = () => {
     start_datetime: '',
     end_datetime: '',
     country: 'Colombia',
-
-
     status: 'programado',
-    // --- FIN DE CORRECCIÓN ---
-
     location: '',
     city_text: '',
     department_text: '',
-
     min_age: '',
     max_capacity: '',
     sales_open_datetime: '',
-
   });
 
-  // ... (el resto de tus estados: departments, cities, etc. no cambian) ...
   const [departments, setDepartments] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
   const [filteredCities, setFilteredCities] = useState<any[]>([]);
@@ -47,7 +40,6 @@ const CreateEvent = () => {
   const eventTotalCapacity = parseInt(formData.max_capacity, 10) || 0;
   const currentConfiguredCapacity = configuredTickets.reduce((total, ticket) => total + ticket.maximun_capacity, 0);
   const remainingCapacity = eventTotalCapacity - currentConfiguredCapacity;
-
 
   useEffect(() => {
     if (!token) return;
@@ -76,7 +68,6 @@ const CreateEvent = () => {
         setCities(citiesData);
 
         if (departmentsData.length > 0) {
-          // Intenta encontrar un departamento común como Antioquia (ID 2) o Cundinamarca (ID 14)
           const defaultDept = departmentsData.find((d: any) => d.id === 2) || departmentsData[0];
           setFilteredCities(citiesData.filter((c: any) => c.department.id === defaultDept.id));
         }
@@ -123,13 +114,11 @@ const CreateEvent = () => {
   };
 
   const handleAddTicket = () => {
-    // 1. Validación de campos de la boleta (como ya la tenías)
     if (!currentTicket.ticket_type_id || !currentTicket.price || !currentTicket.maximun_capacity) {
       setError('Por favor complete todos los campos de la boleta.');
       return;
     }
 
-    // 2. Validación de duplicados (como ya la tenías)
     const exists = configuredTickets.find(
       t => t.ticket_type_id === parseInt(currentTicket.ticket_type_id, 10)
     );
@@ -138,36 +127,26 @@ const CreateEvent = () => {
       return;
     }
 
-    // --- INICIO DE LA NUEVA VALIDACIÓN DE AFORO ---
-
-    // 3. Obtener el aforo total del evento (del formulario principal)
     const eventTotalCapacity = parseInt(formData.max_capacity, 10);
 
-    // 4. Solo validamos si el usuario SÍ definió un aforo máximo para el evento
     if (eventTotalCapacity > 0) {
-
-      // 5. Calcular cuántas boletas ya están configuradas
       const currentConfiguredCapacity = configuredTickets.reduce(
         (total, ticket) => total + ticket.maximun_capacity,
         0
       );
 
-      // 6. Obtener la capacidad de la NUEVA boleta que se intenta añadir
       const newTicketCapacity = parseInt(currentTicket.maximun_capacity, 10);
 
-      // 7. Comprobar si se supera el límite
       if ((currentConfiguredCapacity + newTicketCapacity) > eventTotalCapacity) {
         setError(
           `Error: El aforo total del evento es ${eventTotalCapacity}. ` +
           `Ya hay ${currentConfiguredCapacity} boletas configuradas. ` +
           `Añadir ${newTicketCapacity} más superaría el límite.`
         );
-        return; // Detenemos la función aquí
+        return;
       }
     }
-    // --- FIN DE LA NUEVA VALIDACIÓN DE AFORO ---
 
-    // 8. Si todo pasa, se añade la boleta (con la corrección de tipos que hicimos antes)
     const newTicket = {
       ticket_type_id: parseInt(currentTicket.ticket_type_id, 10),
       price: parseFloat(currentTicket.price),
@@ -183,7 +162,6 @@ const CreateEvent = () => {
     setConfiguredTickets(prev => prev.filter((_, i) => i !== index));
   };
 
-  // El handleSubmit (que te pasé antes) ya está correcto
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
@@ -200,7 +178,6 @@ const CreateEvent = () => {
 
     const finalFormData = new FormData();
 
-    // 1. Añadir campos de texto simples
     finalFormData.append('event_name', formData.event_name);
     finalFormData.append('description', formData.description);
     finalFormData.append('organizer', formData.organizer);
@@ -209,13 +186,8 @@ const CreateEvent = () => {
     finalFormData.append('start_datetime', formData.start_datetime);
     finalFormData.append('end_datetime', formData.end_datetime);
     finalFormData.append('country', formData.country);
-
-    // --- CORRECCIÓN DE ERROR 400 (STATUS) ---
     finalFormData.append('status', formData.status);
-    // --- FIN DE CORRECCIÓN ---
 
-    // --- AÑADIR AQUÍ LOS NUEVOS CAMPOS OPCIONALES ---
-    // (Asegúrate de haberlos añadido al useState)
     if (formData.min_age) {
       finalFormData.append('min_age', formData.min_age);
     }
@@ -226,8 +198,6 @@ const CreateEvent = () => {
       finalFormData.append('sales_open_datetime', formData.sales_open_datetime);
     }
 
-
-    // 3. Lógica condicional de ubicación
     if (formData.country === 'Colombia') {
       if (!formData.location) {
         setError('Si el país es Colombia, debes seleccionar una ciudad.');
@@ -245,13 +215,9 @@ const CreateEvent = () => {
       finalFormData.append('department_text', formData.department_text);
     }
 
-    // 4. Lógica de tickets (CORREGIDA)
-    // El backend (EventSerializer) espera un string JSON en el campo 'ticket_type'
-    //
     finalFormData.append('ticket_type', JSON.stringify(configuredTickets));
 
     try {
-      // Esta URL es la que tu backend espera
       const apiUrl = `${import.meta.env.VITE_API_URL}/events/`;
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -295,11 +261,15 @@ const CreateEvent = () => {
       setLoading(false);
     }
   };
-  // ... (El JSX del return) ...
+
+  // Clase común para inputs
+  const inputClass = "mt-1 block w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm";
+
   return (
     <div className="container mx-auto p-4">
-      {/* ... (tu h1 y tu Alert de error se quedan igual) ... */}
+      
       <h1 className="text-2xl font-bold mb-4">Crear Evento</h1>
+      
       {error && (
         <div className="mb-4">
           <Alert variant="error" title="Error" message={error} />
@@ -308,25 +278,25 @@ const CreateEvent = () => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
 
-        {/* ... (Sección 1: Información Principal - queda igual) ... */}
+        {/* Sección 1: Información Principal */}
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Información Principal</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="event_name" className="block text-sm font-medium text-gray-700">Nombre del Evento</label>
-              <input type="text" name="event_name" id="event_name" value={formData.event_name} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <input type="text" name="event_name" id="event_name" value={formData.event_name} onChange={handleChange} required className={inputClass} />
             </div>
             <div>
               <label htmlFor="organizer" className="block text-sm font-medium text-gray-700">Organizador</label>
-              <input type="text" name="organizer" id="organizer" value={formData.organizer} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <input type="text" name="organizer" id="organizer" value={formData.organizer} onChange={handleChange} required className={inputClass} />
             </div>
             <div className="md:col-span-2">
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">Descripción</label>
-              <textarea name="description" id="description" value={formData.description} onChange={handleChange} required minLength={20} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" rows={4}></textarea>
+              <textarea name="description" id="description" value={formData.description} onChange={handleChange} required minLength={20} className={inputClass} rows={4}></textarea>
             </div>
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700">Categoría</label>
-              <select name="category" id="category" value={formData.category} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              <select name="category" id="category" value={formData.category} onChange={handleChange} required className={inputClass}>
                 <option value="">Seleccione una categoría</option>
                 <option value="musica">Música</option>
                 <option value="deporte">Deporte</option>
@@ -342,81 +312,48 @@ const CreateEvent = () => {
             </div>
             <div>
               <label htmlFor="min_age" className="block text-sm font-medium text-gray-700">Edad Mínima</label>
-              <input
-                type="number"
-                name="min_age"
-                id="min_age"
-                value={formData.min_age}
-                onChange={handleChange}
-                placeholder="Ej: 18 (Opcional)"
-                min="0"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              <input type="number" name="min_age" id="min_age" value={formData.min_age} onChange={handleChange} placeholder="Ej: 18 (Opcional)" min="0" className={inputClass} />
             </div>
             <div>
               <label htmlFor="max_capacity" className="block text-sm font-medium text-gray-700">Aforo Máximo (Total)</label>
-              <input
-                type="number"
-                name="max_capacity"
-                id="max_capacity"
-                value={formData.max_capacity}
-                onChange={handleChange}
-                placeholder="Ej: 1000 (Opcional)"
-                min="0"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              <input type="number" name="max_capacity" id="max_capacity" value={formData.max_capacity} onChange={handleChange} placeholder="Ej: 1000 (Opcional)" min="0" className={inputClass} />
             </div>
           </div>
         </div>
 
-        {/* --- Sección 2: Fecha y Lugar (con el <select> de Status oculto) --- */}
+        {/* Sección 2: Fecha y Lugar */}
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Fecha y Lugar</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ... (tus campos de date, start_datetime, end_datetime, country) ... */}
             <div>
               <label htmlFor="date" className="block text-sm font-medium text-gray-700">Fecha (Legacy)</label>
-              <input type="date" name="date" id="date" value={formData.date} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <input type="date" name="date" id="date" value={formData.date} onChange={handleChange} required className={inputClass} />
             </div>
             <div>
               <label htmlFor="start_datetime" className="block text-sm font-medium text-gray-700">Fecha y Hora de Inicio</label>
-              <input type="datetime-local" name="start_datetime" id="start_datetime" value={formData.start_datetime} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <input type="datetime-local" name="start_datetime" id="start_datetime" value={formData.start_datetime} onChange={handleChange} required className={inputClass} />
             </div>
             <div>
               <label htmlFor="end_datetime" className="block text-sm font-medium text-gray-700">Fecha y Hora de Fin</label>
-              <input type="datetime-local" name="end_datetime" id="end_datetime" value={formData.end_datetime} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <input type="datetime-local" name="end_datetime" id="end_datetime" value={formData.end_datetime} onChange={handleChange} required className={inputClass} />
             </div>
             <div>
               <label htmlFor="sales_open_datetime" className="block text-sm font-medium text-gray-700">Inicio de Ventas (Opcional)</label>
-              <input
-                type="datetime-local"
-                name="sales_open_datetime"
-                id="sales_open_datetime"
-                value={formData.sales_open_datetime}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              <input type="datetime-local" name="sales_open_datetime" id="sales_open_datetime" value={formData.sales_open_datetime} onChange={handleChange} className={inputClass} />
             </div>
             <div>
               <label htmlFor="country" className="block text-sm font-medium text-gray-700">País</label>
-              <select name="country" id="country" value={formData.country} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              <select name="country" id="country" value={formData.country} onChange={handleChange} required className={inputClass}>
                 <option value="Colombia">Colombia</option>
                 <option value="Otro">Otro (Internacional)</option>
               </select>
             </div>
 
-            {/* ... (tus campos condicionales de ubicación) ... */}
             {formData.country === 'Colombia' ? (
               <>
                 <div>
                   <label htmlFor="department_filter" className="block text-sm font-medium text-gray-700">Departamento</label>
-                  <select
-                    name="department_filter"
-                    id="department_filter"
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  >
+                  <select name="department_filter" id="department_filter" onChange={handleChange} required className={inputClass}>
                     <option value="">Seleccione un departamento</option>
                     {departments.map((dept: any) => (
                       <option key={dept.id} value={dept.id}>{dept.name}</option>
@@ -425,14 +362,7 @@ const CreateEvent = () => {
                 </div>
                 <div>
                   <label htmlFor="location" className="block text-sm font-medium text-gray-700">Ciudad</label>
-                  <select
-                    name="location"
-                    id="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  >
+                  <select name="location" id="location" value={formData.location} onChange={handleChange} required className={inputClass}>
                     <option value="">Seleccione una ciudad</option>
                     {filteredCities.map((city: any) => (
                       <option key={city.id} value={city.id}>{city.name}</option>
@@ -444,57 +374,28 @@ const CreateEvent = () => {
               <>
                 <div>
                   <label htmlFor="department_text" className="block text-sm font-medium text-gray-700">Departamento/Región</label>
-                  <input
-                    type="text"
-                    name="department_text"
-                    id="department_text"
-                    value={formData.department_text}
-                    onChange={handleChange}
-                    required
-                    placeholder="Ej: California"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
+                  <input type="text" name="department_text" id="department_text" value={formData.department_text} onChange={handleChange} required placeholder="Ej: California" className={inputClass} />
                 </div>
                 <div>
                   <label htmlFor="city_text" className="block text-sm font-medium text-gray-700">Ciudad</label>
-                  <input
-                    type="text"
-                    name="city_text"
-                    id="city_text"
-                    value={formData.city_text}
-                    onChange={handleChange}
-                    required
-                    placeholder="Ej: Los Angeles"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
+                  <input type="text" name="city_text" id="city_text" value={formData.city_text} onChange={handleChange} required placeholder="Ej: Los Angeles" className={inputClass} />
                 </div>
               </>
             )}
 
-            {/* --- CORRECCIÓN: Campo de status oculto --- */}
-            {/* Este campo está oculto porque el backend tiene un bug.
-              Estamos enviando 'otros' por defecto (definido en el useState).
-              Cuando el backend lo arregle, puedes volver a mostrar el <select>
-              y cambiar el valor del useState a 'programado'.
-            */}
-
-            {// Este era el <select> original, lo comentamos:
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">Estado</label>
-                <select name="status" id="status" value={formData.status} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                  <option value="programado">Programado</option>
-                  <option value="activo">Activo</option>
-                  <option value="cancelado">Cancelado</option>
-                  <option value="finalizado">Finalizado</option>
-                </select>
-              </div>
-            }
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700">Estado</label>
+              <select name="status" id="status" value={formData.status} onChange={handleChange} className={inputClass}>
+                <option value="programado">Programado</option>
+                <option value="activo">Activo</option>
+                <option value="cancelado">Cancelado</option>
+                <option value="finalizado">Finalizado</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* ... (Sección 3: Boletas - queda igual) ... */}
-        {/* ... (Sección 4: Botón Guardar - queda igual) ... */}
-        {/* (Tu código para estas secciones ya estaba bien) */}
+        {/* Sección 3: Boletas */}
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Configuración de Boletas</h2>
           {eventTotalCapacity > 0 && (
@@ -506,7 +407,7 @@ const CreateEvent = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
             <div className="md:col-span-1">
               <label htmlFor="ticket_type_id" className="block text-sm font-medium text-gray-700">Tipo de Boleta</label>
-              <select name="ticket_type_id" id="ticket_type_id" value={currentTicket.ticket_type_id} onChange={handleTicketChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              <select name="ticket_type_id" id="ticket_type_id" value={currentTicket.ticket_type_id} onChange={handleTicketChange} className={inputClass}>
                 <option value="">Seleccione un tipo</option>
                 {ticketTypes.map((type: any) => (
                   <option key={type.id} value={type.id}>{type.ticket_name}</option>
@@ -515,11 +416,11 @@ const CreateEvent = () => {
             </div>
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700">Precio</label>
-              <input type="number" name="price" id="price" value={currentTicket.price} onChange={handleTicketChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" min="0" step="0.01" />
+              <input type="number" name="price" id="price" value={currentTicket.price} onChange={handleTicketChange} className={inputClass} min="0" step="0.01" />
             </div>
             <div>
               <label htmlFor="maximun_capacity" className="block text-sm font-medium text-gray-700">Capacidad Máxima</label>
-              <input type="number" name="maximun_capacity" id="maximun_capacity" value={currentTicket.maximun_capacity} onChange={handleTicketChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" min="1" />
+              <input type="number" name="maximun_capacity" id="maximun_capacity" value={currentTicket.maximun_capacity} onChange={handleTicketChange} className={inputClass} min="1" />
             </div>
             <div className="md:col-span-1">
               <button type="button" onClick={handleAddTicket} className="w-full px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -529,7 +430,7 @@ const CreateEvent = () => {
           </div>
           {configuredTickets.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-medium">Boletas Configradas</h3>
+              <h3 className="text-lg font-medium">Boletas Configuradas</h3>
               <div className="overflow-x-auto mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
