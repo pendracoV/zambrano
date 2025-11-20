@@ -33,6 +33,8 @@ import ManageEvent from "./pages/Events/ManageEvent";
 import UserManagement from "./pages/admin/UserManagement";
 import PaymentSuccess from './pages/PaymentSuccess'; // Importa las nuevas páginas
 import PaymentFailed from './pages/PaymentFailed';
+import ForgotPassword from "./pages/AuthPages/ForgotPassword";
+import ResetPassword from "./pages/AuthPages/ResetPassword";
 
 export default function App() {
   return (
@@ -45,6 +47,8 @@ export default function App() {
           <Route element={<PublicRoute />}>
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
 
           {/* Rutas Protegidas - Requieren autenticación */}

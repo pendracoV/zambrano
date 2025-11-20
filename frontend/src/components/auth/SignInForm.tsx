@@ -4,27 +4,24 @@ import axios from "axios";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
-import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { useAuth } from "../../context/Authcontext";
 
 export default function SignInForm() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // Usar el contexto
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      // --- PASO 1: Login (igual que antes) ---
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/users/login/`,
         {
@@ -38,30 +35,24 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         throw new Error("Respuesta del servidor incompleta (no hay token)");
       }
 
-      // --- PASO 2: (¡NUEVO!) Pedir el perfil completo ---
-      // Usamos el token que acabamos de recibir
       const profileResponse = await axios.get(
         `${import.meta.env.VITE_API_URL}/users/profile/`,
         {
           headers: { Authorization: `Token ${token}` }
         }
       );
-      
-      // 'fullUser' SÍ tiene "is_superuser", "is_staff", "first_name", etc.
+
       const fullUser = profileResponse.data;
 
-      // --- PASO 3: Guardar el token Y el perfil completo ---
-      login(token, fullUser); 
-      
+      login(token, fullUser);
+
       console.log("✅ Usuario autenticado con perfil completo:", fullUser);
-      
-      // Navegar al home
+
       navigate("/", { replace: true });
-      
+
     } catch (err: unknown) {
-      // ... (tu manejo de error se queda igual)
       console.error("❌ Error en login:", err);
-      
+
       if (axios.isAxiosError(err)) {
         if (err.response) {
           setError(err.response.data.message || "Credenciales inválidas");
@@ -115,7 +106,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     type="email"
                     placeholder="info@gmail.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)} 
+                    onChange={(e) => setEmail(e.target.value)}
                     disabled={isLoading}
                     required
                   />
@@ -144,6 +135,12 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       )}
                     </span>
                   </div>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-brand-500 hover:text-brand-600 dark:text-brand-400 float-right mt-2"
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
                 <div>
                   <Button
@@ -174,4 +171,4 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       </div>
     </div>
   );
-} 
+}
