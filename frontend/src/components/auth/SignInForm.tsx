@@ -4,15 +4,13 @@ import axios from "axios";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
-import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { useAuth } from "../../context/Authcontext";
 
 export default function SignInForm() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // Usar el contexto
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -32,29 +30,29 @@ export default function SignInForm() {
         }
       );
 
-      console.log("Login exitoso:", response.data);
-
-      // Extraer token y construir objeto de usuario
       const token = response.data.token;
-      const user = {
-        id: response.data.user_id.toString(),
-        email: response.data.email,
-        username: response.data.username || '',
-      };
-
-      if (token && user.id) {
-        login(token, user);
-        console.log("✅ Usuario autenticado con contexto");
-        
-        // Navegar al home
-        navigate("/", { replace: true });
-      } else {
-        setError("Respuesta del servidor incompleta");
+      if (!token) {
+        throw new Error("Respuesta del servidor incompleta (no hay token)");
       }
-      
+
+      const profileResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL}/users/profile/`,
+        {
+          headers: { Authorization: `Token ${token}` }
+        }
+      );
+
+      const fullUser = profileResponse.data;
+
+      login(token, fullUser);
+
+      console.log("✅ Usuario autenticado con perfil completo:", fullUser);
+
+      navigate("/", { replace: true });
+
     } catch (err: unknown) {
       console.error("❌ Error en login:", err);
-      
+
       if (axios.isAxiosError(err)) {
         if (err.response) {
           setError(err.response.data.message || "Credenciales inválidas");
@@ -108,7 +106,7 @@ export default function SignInForm() {
                     type="email"
                     placeholder="info@gmail.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)} 
+                    onChange={(e) => setEmail(e.target.value)}
                     disabled={isLoading}
                     required
                   />
@@ -137,6 +135,12 @@ export default function SignInForm() {
                       )}
                     </span>
                   </div>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-brand-500 hover:text-brand-600 dark:text-brand-400 float-right mt-2"
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
                 <div>
                   <Button
