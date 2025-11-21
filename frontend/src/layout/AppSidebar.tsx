@@ -3,23 +3,16 @@ import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
-  BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
   PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
   TaskIcon,
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "../context/Authcontext"; // ⭐ NUEVO
-import SidebarWidget from "./SidebarWidget";
-
 // ⭐ ACTUALIZADO: Agregamos roles a NavItem y SubItem
 type NavItem = {
   name: string;
@@ -78,12 +71,6 @@ const navItems: NavItem[] = [
     roles: ["Administrador", "Staff"], // ⚠️ Solo admin/staff
   },
   {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-    // Sin roles = accesible para todos
-  },
-  {
     icon: <UserCircleIcon />,
     name: "User Profile",
     path: "/profile",
@@ -95,69 +82,10 @@ const navItems: NavItem[] = [
     path: "/admin/user-management",
     roles: ["Administrador"], // ⚠️ Solo administradores
   },
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ 
-      name: "Form Elements", 
-      path: "/form-elements", 
-      pro: false 
-    }],
-    roles: ["Administrador", "Staff"], // Ejemplo: solo para admin/staff
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ 
-      name: "Basic Tables", 
-      path: "/basic-tables", 
-      pro: false 
-    }],
-    roles: ["Administrador", "Staff"], // Ejemplo
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-    // Sin roles = accesible para todos
-  },
 ];
 
 const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-    roles: ["Administrador", "Staff"], // Ejemplo
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-    roles: ["Administrador", "Staff"], // Ejemplo
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-    // Sin roles = accesible para todos (páginas públicas)
-  },
+
 ];
 
 const AppSidebar: React.FC = () => {
@@ -493,7 +421,6 @@ const AppSidebar: React.FC = () => {
             )}
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );
