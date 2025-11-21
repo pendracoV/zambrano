@@ -16,7 +16,7 @@ const TicketTypeManagement = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentTicketType, setCurrentTicketType] = useState<any>(null);
   const [formData, setFormData] = useState({ ticket_name: '', description: '' });
-  const [formError, setFormError] = useState<string | null>(null); // Estado para errores de formulario
+  const [formError, setFormError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchTicketTypes = async () => {
@@ -30,9 +30,7 @@ const TicketTypeManagement = () => {
       setIsLoading(true);
       const apiUrl = `${import.meta.env.VITE_API_URL}/ticket-types/`;
       const response = await axios.get(apiUrl, {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
+        headers: { Authorization: `Token ${token}` },
       });
       setTicketTypes(response.data);
       setFilteredTicketTypes(response.data);
@@ -56,7 +54,7 @@ const TicketTypeManagement = () => {
 
   const handleOpenCreateModal = () => {
     setIsEditMode(false);
-    setFormError(null); // Limpiar errores al abrir
+    setFormError(null);
     setFormData({ ticket_name: '', description: '' });
     setCurrentTicketType(null);
     openFormModal();
@@ -64,7 +62,7 @@ const TicketTypeManagement = () => {
 
   const handleOpenEditModal = (ticketType: any) => {
     setIsEditMode(true);
-    setFormError(null); // Limpiar errores al abrir
+    setFormError(null);
     setFormData({ ticket_name: ticketType.ticket_name, description: ticketType.description });
     setCurrentTicketType(ticketType);
     openFormModal();
@@ -81,27 +79,23 @@ const TicketTypeManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); // Limpiar error previo
+    setFormError(null);
     if (!token) return;
 
     const url = isEditMode
       ? `${import.meta.env.VITE_API_URL}/ticket-types/${currentTicketType.id}/`
       : `${import.meta.env.VITE_API_URL}/ticket-types/`;
-    
+
     const method = isEditMode ? 'put' : 'post';
 
     try {
       await axios[method](url, formData, {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
+        headers: { Authorization: `Token ${token}` },
       });
       closeFormModal();
-      fetchTicketTypes(); // Refresh data
+      fetchTicketTypes();
     } catch (err) {
-      // Mostrar error al usuario
       if (axios.isAxiosError(err) && err.response) {
-        // Puedes ser más específico si tu API devuelve mensajes de error claros
         setFormError(`Error: ${Object.values(err.response.data).join(', ')}`);
       } else {
         setFormError('No se pudo guardar el tipo de boleta. Inténtalo de nuevo.');
@@ -115,118 +109,245 @@ const TicketTypeManagement = () => {
     try {
       const url = `${import.meta.env.VITE_API_URL}/ticket-types/${currentTicketType.id}/`;
       await axios.delete(url, {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
+        headers: { Authorization: `Token ${token}` },
       });
       closeDeleteModal();
-      fetchTicketTypes(); // Refresh data
+      fetchTicketTypes();
     } catch (err) {
-      // Aquí podrías usar un sistema de notificaciones (toasts) para informar del error
       alert('No se pudo eliminar el tipo de boleta. Puede que esté en uso.');
     }
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestión de Tipos de Boleta</h1>
-        <button onClick={handleOpenCreateModal} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Crear Nuevo Tipo de Boleta
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
 
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Buscar por nombre..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="w-full md:w-1/3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 text-gray-900 dark:text-white"
-        />
-      </div>
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-8 space-y-4 md:space-y-0">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              Gestión de Tipos de Boleta
+            </h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Administra las categorías de entradas disponibles para los eventos.
+            </p>
+          </div>
 
-      {isLoading ? (
-        <div className="text-center py-12"><p className="text-gray-600 dark:text-gray-400">Cargando...</p></div>
-      ) : error ? (
-        <div className="text-center py-12"><p className="text-red-500">{error}</p></div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-100 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Descripción</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredTicketTypes.map((ticketType) => (
-                <tr key={ticketType.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{ticketType.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{ticketType.ticket_name}</td>
-                  <td className="px-6 py-4 text-gray-900 dark:text-white">{ticketType.description}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button onClick={() => handleOpenEditModal(ticketType)} className="text-blue-500 hover:text-blue-700 mr-4">Editar</button>
-                    <button onClick={() => handleOpenDeleteModal(ticketType)} className="text-red-500 hover:text-red-700">Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <button
+            onClick={handleOpenCreateModal}
+            className="group inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg className="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Crear Nuevo Tipo
+          </button>
         </div>
-      )}
 
+        {/* Controls & Search */}
+        <div className="mb-8">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-sm transition-shadow duration-200"
+            />
+          </div>
+        </div>
+
+        {/* Table Section */}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r-lg">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Nombre
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Descripción
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredTicketTypes.map((ticketType) => (
+                    <tr
+                      key={ticketType.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 ease-in-out group"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        #{ticketType.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {ticketType.ticket_name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                          {ticketType.description}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={() => handleOpenEditModal(ticketType)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                            title="Editar"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleOpenDeleteModal(ticketType)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                            title="Eliminar"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filteredTicketTypes.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400 text-lg">No se encontraron tipos de boleta.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
       <Modal isOpen={isFormOpen} onClose={closeFormModal} title={isEditMode ? 'Editar Tipo de Boleta' : 'Crear Tipo de Boleta'}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {formError && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{formError}</div>
+            <div className="p-4 rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-700 dark:text-red-200">{formError}</p>
+                </div>
+              </div>
+            </div>
           )}
-          <div className="mb-4">
-            <label htmlFor="ticket_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Boleta</label>
+
+          <div>
+            <label htmlFor="ticket_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nombre de la Boleta
+            </label>
             <input
               type="text"
               name="ticket_name"
               id="ticket_name"
               value={formData.ticket_name}
               onChange={handleFormChange}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 dark:text-white"
+              className="block w-full px-4 py-3 rounded-xl border-gray-300 dark:border-gray-600 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="Ej. VIP, General, Estudiante"
               required
             />
           </div>
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
+
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Descripción
+            </label>
             <textarea
               name="description"
               id="description"
               value={formData.description}
               onChange={handleFormChange}
-              rows={3}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 dark:text-white"
+              rows={4}
+              className="block w-full px-4 py-3 rounded-xl border-gray-300 dark:border-gray-600 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="Detalles sobre este tipo de entrada..."
             ></textarea>
           </div>
-          <div className="flex justify-end">
-            <button type="button" onClick={closeFormModal} className="mr-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded">
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={closeFormModal}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               Cancelar
             </button>
-            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              Guardar
+            <button
+              type="submit"
+              className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              {isEditMode ? 'Guardar Cambios' : 'Crear Tipo'}
             </button>
           </div>
         </form>
       </Modal>
 
       <Modal isOpen={isDeleteOpen} onClose={closeDeleteModal} title="Confirmar Eliminación">
-        <div>
-          <p className="text-gray-800 dark:text-gray-200">¿Estás seguro de que deseas eliminar el tipo de boleta '{currentTicketType?.ticket_name}'?</p>
-          <p className="text-sm text-red-500 mt-2">Cuidado: Esta acción no se puede deshacer y puede afectar a eventos existentes.</p>
-          <div className="flex justify-end mt-4">
-            <button type="button" onClick={closeDeleteModal} className="mr-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full">
+            <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">¿Eliminar tipo de boleta?</h3>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              ¿Estás seguro de que deseas eliminar <span className="font-bold text-gray-800 dark:text-gray-200">'{currentTicketType?.ticket_name}'</span>? Esta acción no se puede deshacer.
+            </p>
+          </div>
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              onClick={closeDeleteModal}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               Cancelar
             </button>
-            <button onClick={handleDelete} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-              Eliminar
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Sí, Eliminar
             </button>
           </div>
         </div>
