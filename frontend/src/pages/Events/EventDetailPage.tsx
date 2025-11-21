@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { CalenderIcon } from '../../icons';
 import { useAuth } from '../../context/Authcontext'; // <-- AÑADE useAuth
-
+import EventAIWidget from '../../components/events/EventAIWidget'; // Ajusta la ruta según donde lo creaste
 // ✅ OPCIÓN 2: Importar imágenes (recomendada por Vite/React)
 
 import defaultEventImage from '/public/images/1.jpg';
@@ -332,6 +332,7 @@ const EventDetailPage = () => {
             </div>
             <p className="text-gray-600 dark:text-gray-400">{locationName}, {regionName}</p>
           </div>
+          <EventAIWidget eventId={id!} />
         </div>
 
         {(event.status === 'activo' || event.status === 'programado') && (

@@ -252,7 +252,7 @@ const CreateEvent = () => {
       }
 
       alert('¡Evento creado exitosamente!');
-      window.location.href = '/admin/events';
+      window.location.href = '/my-events';
 
     } catch (err: any) {
       setError(err.message);
