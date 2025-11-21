@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/Authcontext';
 import UserDropdown from '../../components/header/UserDropdown';
 import EventCard from '../../components/ecommerce/EventCard';
+import GestifyLogo from '../../components/common/GestifyLogo';
 
 const LandingPage = () => {
   const { isAuthenticated } = useAuth();
@@ -40,7 +41,9 @@ const LandingPage = () => {
     <div className="bg-gray-100 text-gray-800">
       {/* Sección 1: Barra de Navegación */}
       <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50 p-4 flex justify-between items-center">
-        <div className="text-2xl font-bold text-blue-600">Gestify</div>
+        <Link to="/">
+          <GestifyLogo size="md" />
+        </Link>
         <nav>
           <a href="#home" className="mx-2">Inicio</a>
           <Link to="/events" className="mx-2">Eventos</Link>
