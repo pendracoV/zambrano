@@ -1,8 +1,44 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom'; // Importar useSearchParams
+import { useSearchParams } from 'react-router-dom';
 import DetailedEventCard from '../../components/ecommerce/DetailedEventCard';
 import AdvancedFilters from '../../components/events/AdvancedFilters';
+
+// --- IMPORTACIÓN DE IMÁGENES POR DEFECTO ---
+// Aseguramos que si falla la imagen de base de datos, tengamos un respaldo visual
+import defaultEventImageArte from '/public/images/arte.jpeg';
+import defaultEventImageDeporte from '/public/images/deportes.jpg';
+import defaultEventImageEducacion from '/public/images/educacion.jpg';
+import defaultEventImageMusica from '/public/images/musica.webp';
+import defaultEventImageOtros from '/public/images/otros.jpg';
+import defaultEventImageTecnologia from '/public/images/tecnologia.jpg';
+
+// --- CONFIGURACIÓN DE DICCIONARIO DE IMÁGENES ---
+const defaultImages: { [key: string]: string } = {
+  musica: defaultEventImageMusica,
+  deporte: defaultEventImageDeporte,
+  arte: defaultEventImageArte,
+  tecnologia: defaultEventImageTecnologia,
+  educacion: defaultEventImageEducacion,
+  otros: defaultEventImageOtros,
+};
+
+// --- FUNCIÓN AUXILIAR PARA OBTENER LA IMAGEN ---
+const getEventImage = (event: any): string | null => {
+  // 1. Si el evento trae imagen y no es una cadena vacía, usamos esa
+  if (event.image && event.image.trim() !== '') {
+    return event.image;
+  }
+
+  // 2. Si no tiene imagen, buscamos por categoría
+  const category = event.category?.toLowerCase();
+  if (category && defaultImages[category]) {
+    return defaultImages[category];
+  }
+
+  // 3. Retorno por defecto si todo falla (puedes poner 'otros' o null)
+  return defaultImages['otros'];
+};
 
 const AllEventsPage = () => {
   const [allEvents, setAllEvents] = useState<any[]>([]);
@@ -14,7 +50,6 @@ const AllEventsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Inicializamos filtros leyendo la URL (si existen params)
-  // Esto asegura que si vienes de la Landing Page, el filtro ya esté puesto
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     dateFrom: '',
@@ -41,8 +76,6 @@ const AllEventsPage = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/events/`);
         setAllEvents(response.data);
-        // Nota: No seteamos setFilteredEvents aquí directamente,
-        // dejamos que el useEffect de filtros lo haga para aplicar searchParams iniciales
       } catch (err) {
         setError('No se pudieron cargar los eventos. Intente de nuevo más tarde.');
         console.error("Error fetching events:", err);
@@ -84,14 +117,11 @@ const AllEventsPage = () => {
 
     if (filters.city && filters.city !== 'Todas') {
       events = events.filter(event => {
-        // CORRECCIÓN: Comparamos ID con ID (flexible por si viene string/number)
-        // El backend manda 'location' como ID (número)
         return event.location == filters.city;
       });
     }
 
     if (filters.genre && filters.genre !== 'Todos') {
-      // Asegúrate que en BD guardas 'musica', 'deporte' (minúsculas)
       events = events.filter(event => event.category === filters.genre);
     }
 
@@ -104,7 +134,7 @@ const AllEventsPage = () => {
 
     events = events.filter(event => {
       const lowestPrice = getLowestPrice(event);
-      if (lowestPrice === null) return false; // O true, si quieres mostrar eventos sin precio
+      if (lowestPrice === null) return false; 
 
       if (!isNaN(minPrice) && lowestPrice < minPrice) {
         return false;
@@ -125,7 +155,6 @@ const AllEventsPage = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // Limpiamos también la URL para que sea consistente
     setSearchParams({});
   }, [setSearchParams]);
 
@@ -176,7 +205,7 @@ const AllEventsPage = () => {
           <AdvancedFilters 
             filters={filters} 
             setFilters={setFilters} 
-            onApply={() => applyFilters()} // Forzar re-aplicación manual si es necesario
+            onApply={() => applyFilters()} 
             onClear={handleClearFilters} 
           />
         </div>
@@ -238,9 +267,22 @@ const AllEventsPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredEvents.map(event => (
-                <DetailedEventCard key={event.id} event={event} />
-              ))}
+              {filteredEvents.map(event => {
+                // AQUÍ CALCULAMOS LA IMAGEN ANTES DE RENDERIZAR LA TARJETA
+                // Resolvemos la imagen usando la misma lógica que el detalle
+                const resolvedImage = getEventImage(event);
+                
+                // Creamos una copia del evento con la imagen correcta inyectada
+                // Esto asegura que DetailedEventCard reciba una imagen válida
+                const eventWithImage = {
+                  ...event,
+                  image: resolvedImage
+                };
+
+                return (
+                  <DetailedEventCard key={event.id} event={eventWithImage} />
+                );
+              })}
             </div>
           )}
         </div>

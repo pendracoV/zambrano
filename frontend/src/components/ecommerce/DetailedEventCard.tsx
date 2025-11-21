@@ -81,7 +81,7 @@ const DetailedEventCard = ({ event }: { event: Event }) => {
       <div className="relative">
         <img 
           // CAMBIO: 'imagen' -> 'image'. Mantenemos el fallback
-          src={event.image || '/images/carousel/carousel-02.png'} 
+          src={event.image} 
           alt={`Imagen de ${event.event_name}`} // CAMBIO: 'nombre' -> 'event_name'
           className="w-full h-48 object-cover rounded-t-lg"
         />

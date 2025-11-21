@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Importar useNavigate
+import { Link, useNavigate } from 'react-router-dom'; 
 import { useAuth } from '../../context/Authcontext';
 import UserDropdown from '../../components/header/UserDropdown';
-import axios from 'axios'; // Importar axios para tendencias
+import axios from 'axios'; 
 import { Search, MapPin, ArrowRight } from 'lucide-react';
-// Ajusta la ruta de tu imagen por defecto si es necesario
-import defaultEventImage from '/images/1.jpg'; 
+
+// --- 1. IMPORTACIÓN DE IMÁGENES POR DEFECTO ---
+// Asegúrate de que estas rutas sean correctas según tu estructura de carpetas (public o assets)
+import defaultEventImageArte from '/images/arte.jpeg';
+import defaultEventImageDeporte from '/images/deportes.jpg';
+import defaultEventImageEducacion from '/images/educacion.jpg';
+import defaultEventImageMusica from '/images/musica.webp';
+import defaultEventImageOtros from '/images/otros.jpg';
+import defaultEventImageTecnologia from '/images/tecnologia.jpg';
+
+// --- 2. MAPEO DE CATEGORÍAS A IMÁGENES ---
+const defaultImages: { [key: string]: string } = {
+  musica: defaultEventImageMusica,
+  deporte: defaultEventImageDeporte,
+  arte: defaultEventImageArte,
+  tecnologia: defaultEventImageTecnologia,
+  educacion: defaultEventImageEducacion,
+  otros: defaultEventImageOtros,
+};
 
 const CATEGORIES = [
   { id: 'musica', name: 'Música', icon: '🎵' },
@@ -16,9 +33,29 @@ const CATEGORIES = [
   { id: 'otros', name: 'Otros', icon: '✨' },
 ];
 
-// Componente de Tarjeta (Movido aquí para simplicidad, o impórtalo si lo tienes fuera)
+// --- 3. HELPER PARA OBTENER LA IMAGEN ---
+const getEventImage = (event: any): string => {
+  // A. Si el evento tiene imagen en BD, la usamos
+  if (event.image && event.image.trim() !== '') {
+    return event.image;
+  }
+
+  // B. Si no, buscamos por categoría
+  const category = event.category?.toLowerCase(); // Aseguramos minúsculas para coincidir con las llaves
+  if (category && defaultImages[category]) {
+    return defaultImages[category];
+  }
+
+  // C. Si no hay categoría o no coincide, imagen de 'otros'
+  return defaultEventImageOtros;
+};
+
+// --- COMPONENTE DE TARJETA ---
 const EventCard = ({ event, variant = 'standard' }: { event: any, variant?: 'featured' | 'standard' }) => {
   const isFeatured = variant === 'featured';
+  
+  // Usamos el helper aquí
+  const imageUrl = getEventImage(event);
   
   return (
     <Link
@@ -30,9 +67,13 @@ const EventCard = ({ event, variant = 'standard' }: { event: any, variant?: 'fea
       {/* Imagen de Fondo */}
       <div className="absolute inset-0">
         <img
-          src={event.image || defaultEventImage}
-          alt={event.event_name} // Usamos el nombre correcto del campo
+          src={imageUrl}
+          alt={event.event_name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          // Fallback extra por si la URL de la BD está rota
+          onError={(e) => {
+            e.currentTarget.src = defaultEventImageOtros;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
       </div>
@@ -47,7 +88,6 @@ const EventCard = ({ event, variant = 'standard' }: { event: any, variant?: 'fea
         </h3>
         <div className="flex items-center text-gray-300 text-sm space-x-4">
           <span>📅 {new Date(event.start_datetime).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}</span>
-          {/* Ajusta la visualización de ubicación según tu modelo */}
           <span>📍 {event.location_details?.name || event.city_text || 'Ubicación'}</span>
         </div>
       </div>
@@ -59,14 +99,13 @@ const LandingPage = () => {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [scrolled, setScrolled] = useState(false);
-  const [featuredEvents, setFeaturedEvents] = useState<any[]>([]); // Estado para eventos reales
-  const navigate = useNavigate(); // Hook para navegar
+  const [featuredEvents, setFeaturedEvents] = useState<any[]>([]); 
+  const navigate = useNavigate();
 
   // 1. Cargar eventos reales para "Tendencias"
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        // Traemos todos y tomamos los primeros 4 (o podrías tener un endpoint 'featured')
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/events/`);
         // Filtramos solo activos y tomamos 4
         const activeEvents = response.data
@@ -97,14 +136,12 @@ const LandingPage = () => {
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault(); 
     if (searchTerm.trim()) {
-      // Redirige a /events con el parámetro ?search=...
       navigate(`/events?search=${encodeURIComponent(searchTerm)}`);
     }
   };
 
   // 3. Función para clic en categoría
   const handleCategoryClick = (categoryId: string) => {
-      // Redirige a /events con el parámetro ?genre=...
       navigate(`/events?genre=${categoryId}`);
   };
 
@@ -219,7 +256,7 @@ const LandingPage = () => {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => handleCategoryClick(cat.id)} // Llama a la redirección
+                onClick={() => handleCategoryClick(cat.id)}
                 className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-blue-500 hover:shadow-md transition-all whitespace-nowrap group"
               >
                 <span className="text-xl group-hover:scale-125 transition-transform">{cat.icon}</span>
