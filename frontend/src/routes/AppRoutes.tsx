@@ -33,7 +33,7 @@ export function PublicRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/events" replace />;
   }
 
   return <Outlet />;

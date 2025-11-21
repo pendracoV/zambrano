@@ -6,14 +6,19 @@ import { useAuth } from '../../context/Authcontext'; // <-- AÑADE useAuth
 import EventAIWidget from '../../components/events/EventAIWidget'; // Ajusta la ruta según donde lo creaste
 // ✅ OPCIÓN 2: Importar imágenes (recomendada por Vite/React)
 
-import defaultEventImage from '/public/images/1.jpg';
+import defaultEventImageArte from '/public/images/arte.jpeg';
+import defaultEventImageDeporte from '/public/images/deportes.jpg';
+import defaultEventImageEducacion from '/public/images/educacion.jpg';
+import defaultEventImageMusica from '/public/images/musica.webp';
+import defaultEventImageOtros from '/public/images/otros.jpg';
+import defaultEventImageTecnologia from '/public/images/tecnologia.jpg';
 const defaultImages: { [key: string]: string } = {
-  musica: defaultEventImage,
-  deporte: defaultEventImage,
-  arte: defaultEventImage,
-  tecnologia: defaultEventImage,
-  educacion: defaultEventImage,
-  otros: defaultEventImage,
+  musica: defaultEventImageMusica,
+  deporte: defaultEventImageDeporte,
+  arte: defaultEventImageArte,
+  tecnologia: defaultEventImageTecnologia,
+  educacion: defaultEventImageEducacion,
+  otros: defaultEventImageOtros,
 };
 
 // ... (debajo de tus imports, arriba de 'const EventDetailPage = ...')

@@ -31,16 +31,6 @@ type NavItem = {
 // ⭐ ACTUALIZADO: Agregamos roles a cada item del menú
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ 
-      name: "Ecommerce", 
-      path: "/dashboard", 
-      pro: false 
-    }],
-    // Sin roles = accesible para todos los usuarios autenticados
-  },
-  {
     icon: <ListIcon />,
     name: "Eventos",
     path: "/events",

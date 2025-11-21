@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom'; // Importar useSearchParams
 import DetailedEventCard from '../../components/ecommerce/DetailedEventCard';
 import AdvancedFilters from '../../components/events/AdvancedFilters';
 
@@ -8,14 +9,18 @@ const AllEventsPage = () => {
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Hook para leer la URL (Query Params)
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Estados para los filtros
+  // Inicializamos filtros leyendo la URL (si existen params)
+  // Esto asegura que si vienes de la Landing Page, el filtro ya esté puesto
   const [filters, setFilters] = useState({
-    search: '',
+    search: searchParams.get('search') || '',
     dateFrom: '',
     dateTo: '',
     city: 'Todas',
-    genre: 'Todos',
+    genre: searchParams.get('genre') || 'Todos',
     minPrice: '',
     maxPrice: '',
   });
@@ -30,12 +35,14 @@ const AllEventsPage = () => {
     maxPrice: '',
   };
 
+  // 1. Cargar eventos
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/events/`);
         setAllEvents(response.data);
-        setFilteredEvents(response.data);
+        // Nota: No seteamos setFilteredEvents aquí directamente,
+        // dejamos que el useEffect de filtros lo haga para aplicar searchParams iniciales
       } catch (err) {
         setError('No se pudieron cargar los eventos. Intente de nuevo más tarde.');
         console.error("Error fetching events:", err);
@@ -43,7 +50,6 @@ const AllEventsPage = () => {
         setIsLoading(false);
       }
     };
-
     fetchEvents();
   }, []);
 
@@ -64,7 +70,8 @@ const AllEventsPage = () => {
     return validPrices.length > 0 ? Math.min(...validPrices) : null;
   };
 
-  const handleApplyFilters = useCallback(() => {
+  // 2. Lógica de Filtrado
+  const applyFilters = useCallback(() => {
     let events = [...allEvents];
     const minPrice = parseFloat(filters.minPrice);
     const maxPrice = parseFloat(filters.maxPrice);
@@ -77,11 +84,14 @@ const AllEventsPage = () => {
 
     if (filters.city && filters.city !== 'Todas') {
       events = events.filter(event => {
+        // CORRECCIÓN: Comparamos ID con ID (flexible por si viene string/number)
+        // El backend manda 'location' como ID (número)
         return event.location == filters.city;
       });
     }
 
     if (filters.genre && filters.genre !== 'Todos') {
+      // Asegúrate que en BD guardas 'musica', 'deporte' (minúsculas)
       events = events.filter(event => event.category === filters.genre);
     }
 
@@ -94,7 +104,7 @@ const AllEventsPage = () => {
 
     events = events.filter(event => {
       const lowestPrice = getLowestPrice(event);
-      if (lowestPrice === null) return false;
+      if (lowestPrice === null) return false; // O true, si quieres mostrar eventos sin precio
 
       if (!isNaN(minPrice) && lowestPrice < minPrice) {
         return false;
@@ -108,16 +118,22 @@ const AllEventsPage = () => {
     setFilteredEvents(events);
   }, [filters, allEvents]);
 
+  // 3. Aplicar filtros cuando cambian o llegan datos
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    setFilteredEvents(allEvents);
-  }, [allEvents]);
+    // Limpiamos también la URL para que sea consistente
+    setSearchParams({});
+  }, [setSearchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 2xl:p-10">
         
-        {/* Header Section Mejorado */}
+        {/* Header Section */}
         <div className="mb-8 lg:mb-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-1 h-10 bg-brand-500 rounded-full"></div>
@@ -160,7 +176,7 @@ const AllEventsPage = () => {
           <AdvancedFilters 
             filters={filters} 
             setFilters={setFilters} 
-            onApply={handleApplyFilters} 
+            onApply={() => applyFilters()} // Forzar re-aplicación manual si es necesario
             onClear={handleClearFilters} 
           />
         </div>
@@ -168,7 +184,6 @@ const AllEventsPage = () => {
         {/* Content Section */}
         <div className="mt-6">
           {isLoading ? (
-            // Loading State Mejorado
             <div className="flex flex-col items-center justify-center py-20">
               <div className="relative">
                 <div className="w-20 h-20 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
@@ -182,7 +197,6 @@ const AllEventsPage = () => {
               </p>
             </div>
           ) : error ? (
-            // Error State Mejorado
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-6">
                 <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,7 +214,6 @@ const AllEventsPage = () => {
               </button>
             </div>
           ) : filteredEvents.length === 0 ? (
-            // Empty State Mejorado
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
                 <svg className="w-12 h-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,61 +237,11 @@ const AllEventsPage = () => {
               </button>
             </div>
           ) : (
-            // Events Grid Mejorado
-            <>
-              {/* Sorting/View Options (Opcional - puedes comentar si no lo necesitas) */}
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Mostrando <span className="font-semibold text-gray-900 dark:text-white">{filteredEvents.length}</span> resultado{filteredEvents.length !== 1 ? 's' : ''}
-                </p>
-                
-                {/* Sorting Dropdown (placeholder - puedes implementar la lógica) */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="sort" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Ordenar:
-                  </label>
-                  <select 
-                    id="sort"
-                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
-                  >
-                    <option value="date">Fecha</option>
-                    <option value="price-asc">Precio: Menor a Mayor</option>
-                    <option value="price-desc">Precio: Mayor a Menor</option>
-                    <option value="name">Nombre</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Grid de Eventos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
-                {filteredEvents.map(event => (
-                  <DetailedEventCard key={event.id} event={event} />
-                ))}
-              </div>
-
-              {/* Pagination Placeholder (opcional) */}
-              {filteredEvents.length > 12 && (
-                <div className="mt-10 flex items-center justify-center gap-2">
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    Anterior
-                  </button>
-                  <div className="flex items-center gap-1">
-                    <button className="w-10 h-10 flex items-center justify-center rounded-lg bg-brand-500 text-white font-medium text-sm">
-                      1
-                    </button>
-                    <button className="w-10 h-10 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium text-sm transition-colors">
-                      2
-                    </button>
-                    <button className="w-10 h-10 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium text-sm transition-colors">
-                      3
-                    </button>
-                  </div>
-                  <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    Siguiente
-                  </button>
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredEvents.map(event => (
+                <DetailedEventCard key={event.id} event={event} />
+              ))}
+            </div>
           )}
         </div>
       </div>
