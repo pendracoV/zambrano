@@ -5,10 +5,20 @@ interface User {
   id: string;
   email: string;
   username: string;
-  is_superuser: boolean; // <-- La clave del éxito
-  is_staff: boolean;     // <-- Importante también
   first_name: string;
   last_name: string;
+  phone?: string | null;
+  birth_date?: string | null;
+  country?: string;
+  city?: number | null;
+  city_name?: string | null;
+  department?: number | null;
+  department_name?: string | null;
+  profile_picture?: string | null;
+  role?: string[]; // Array de roles/grupos del usuario
+  is_superuser?: boolean;
+  is_staff?: boolean;
+  is_email_verified?: boolean;
   // Agrega otros campos según tu API
 }
 
@@ -17,6 +27,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  setUser: (user: User | null) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -60,11 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const handleSetUser = (newUser: User | null) => {
+    setUser(newUser);
+    if (newUser) {
+      localStorage.setItem('user', JSON.stringify(newUser));
+    } else {
+      localStorage.removeItem('user');
+    }
+  };
+
   const value = {
     user,
     token,
     login,
     logout,
+    setUser: handleSetUser,
     isAuthenticated: !!token,
     isLoading,
   };

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
+import VerifyEmail from "./pages/AuthPages/VerifyEmail";
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
 import Videos from "./pages/UiElements/Videos";
@@ -50,6 +51,9 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
+
+          {/* Ruta de Verificación de Email - Sin autenticación requerida */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* Rutas Protegidas - Requieren autenticación */}
           <Route element={<ProtectedRoute />}>
