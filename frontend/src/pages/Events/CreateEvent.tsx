@@ -103,8 +103,9 @@ const CreateEvent = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData((prev: any) => ({ ...prev, image: e.target.files[0] }));
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setFormData((prev: any) => ({ ...prev, image: files[0] }));
     }
   };
 
@@ -177,7 +178,6 @@ const CreateEvent = () => {
     setError(null);
 
     const finalFormData = new FormData();
-
     finalFormData.append('event_name', formData.event_name);
     finalFormData.append('description', formData.description);
     finalFormData.append('organizer', formData.organizer);
@@ -187,6 +187,11 @@ const CreateEvent = () => {
     finalFormData.append('end_datetime', formData.end_datetime);
     finalFormData.append('country', formData.country);
     finalFormData.append('status', formData.status);
+
+    // Agregar la imagen como 'image_file' si existe
+    if (formData.image) {
+      finalFormData.append('image_file', formData.image);
+    }
 
     if (formData.min_age) {
       finalFormData.append('min_age', formData.min_age);
@@ -215,7 +220,7 @@ const CreateEvent = () => {
       finalFormData.append('department_text', formData.department_text);
     }
 
-    finalFormData.append('ticket_type', JSON.stringify(configuredTickets));
+    finalFormData.append('ticket_type_json', JSON.stringify(configuredTickets));
 
     try {
       const apiUrl = `${import.meta.env.VITE_API_URL}/events/`;
@@ -252,7 +257,7 @@ const CreateEvent = () => {
       }
 
       alert('¡Evento creado exitosamente!');
-      window.location.href = '/my-events';
+      window.location.href = '/organizer/my-events';
 
     } catch (err: any) {
       setError(err.message);

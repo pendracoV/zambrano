@@ -109,22 +109,24 @@ const AllEventsPage = () => {
     const minPrice = parseFloat(filters.minPrice);
     const maxPrice = parseFloat(filters.maxPrice);
 
+    // Solo aplicar filtro de búsqueda si el usuario escribe algo
     if (filters.search) {
       events = events.filter(event =>
         event.event_name.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
+    // Solo aplicar filtro de ciudad si el usuario selecciona una ciudad distinta a 'Todas'
     if (filters.city && filters.city !== 'Todas') {
-      events = events.filter(event => {
-        return event.location == filters.city;
-      });
+      events = events.filter(event => event.location == filters.city);
     }
 
+    // Solo aplicar filtro de género si el usuario selecciona uno distinto a 'Todos'
     if (filters.genre && filters.genre !== 'Todos') {
       events = events.filter(event => event.category === filters.genre);
     }
 
+    // Solo aplicar filtro de fecha si el usuario selecciona alguna
     if (filters.dateFrom) {
       events = events.filter(event => new Date(event.start_datetime) >= new Date(filters.dateFrom));
     }
@@ -132,18 +134,20 @@ const AllEventsPage = () => {
       events = events.filter(event => new Date(event.start_datetime) <= new Date(filters.dateTo));
     }
 
-    events = events.filter(event => {
-      const lowestPrice = getLowestPrice(event);
-      if (lowestPrice === null) return false; 
-
-      if (!isNaN(minPrice) && lowestPrice < minPrice) {
-        return false;
-      }
-      if (!isNaN(maxPrice) && lowestPrice > maxPrice) {
-        return false;
-      }
-      return true;
-    });
+    // Solo filtrar por precio si el usuario ingresa algún valor
+    if (filters.minPrice || filters.maxPrice) {
+      events = events.filter(event => {
+        const lowestPrice = getLowestPrice(event);
+        if (lowestPrice === null) return false;
+        if (filters.minPrice && !isNaN(minPrice) && lowestPrice < minPrice) {
+          return false;
+        }
+        if (filters.maxPrice && !isNaN(maxPrice) && lowestPrice > maxPrice) {
+          return false;
+        }
+        return true;
+      });
+    }
 
     setFilteredEvents(events);
   }, [filters, allEvents]);

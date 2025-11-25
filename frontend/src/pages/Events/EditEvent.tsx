@@ -71,6 +71,14 @@ const EditEvent = () => {
         const citiesData = await citiesRes.json();
 
         // Populate form
+        // Inicializa department_filter si hay ciudad
+        let departmentFilterValue = '';
+        if (eventData.location) {
+          const city = citiesData.find((c: any) => c.id === eventData.location);
+          if (city) {
+            departmentFilterValue = city.department.id.toString();
+          }
+        }
         setFormData({
           ...eventData,
           date: eventData.date.split('T')[0], // Format date
@@ -79,22 +87,33 @@ const EditEvent = () => {
           sales_open_datetime: eventData.sales_open_datetime ? eventData.sales_open_datetime.slice(0, 16) : '',
           current_image_url: eventData.image,
           image: null, // Reset image file input
+          department_filter: departmentFilterValue,
         });
-        // --- INICIO DE LA SOLUCIÓN ---
-        // eventData.ticket_type es la data de LECTURA (para la app móvil)
-        // Tiene un formato como: [{ ticket_type: { id: 1, ... }, price: 50000, ... }]
-        const loadedTickets = eventData.ticket_type || [];
 
-        // Normalizamos los datos al formato que nuestro formulario espera:
-        // { ticket_type_id: 1, price: 50000, ... }
-        const normalizedTickets = loadedTickets.map((ticket: any) => ({
-          ticket_type_id: ticket.ticket_type.id, // <-- Aquí está la magia
-          price: parseFloat(ticket.price),
-          maximun_capacity: ticket.maximun_capacity
-        }));
+        // --- NUEVA SOLUCIÓN: Mostrar la configuración real guardada ---
+        // Usar types_of_tickets_available si existe, si no, fallback a ticket_type
+        let loadedTickets = [];
+        if (Array.isArray(eventData.types_of_tickets_available) && eventData.types_of_tickets_available.length > 0) {
+          loadedTickets = eventData.types_of_tickets_available;
+        } else if (Array.isArray(eventData.ticket_type) && eventData.ticket_type.length > 0) {
+          loadedTickets = eventData.ticket_type.map((ticket: any) => ({
+            ticket_type_id: ticket.ticket_type.id,
+            price: parseFloat(ticket.price),
+            maximun_capacity: ticket.maximun_capacity
+          }));
+          setConfiguredTickets(loadedTickets);
+        }
 
-        setConfiguredTickets(normalizedTickets);
-        // --- FIN DE LA SOLUCIÓN ---
+        // Si types_of_tickets_available viene con la estructura [{id, ticket_type, price, maximun_capacity, ...}]
+        // Normalizamos para el formulario:
+        if (Array.isArray(eventData.types_of_tickets_available) && eventData.types_of_tickets_available.length > 0) {
+          const normalizedTickets = eventData.types_of_tickets_available.map((ticket: any) => ({
+            ticket_type_id: ticket.ticket_type_id || ticket.ticket_type || ticket.id, // depende del backend
+            price: parseFloat(ticket.price),
+            maximun_capacity: ticket.maximun_capacity
+          }));
+          setConfiguredTickets(normalizedTickets);
+        }
 
         // Populate catalogs
         setTicketTypes(ticketsData);
@@ -139,14 +158,16 @@ const EditEvent = () => {
         location: '',
         city_text: '',
         department_text: '',
-        country: value
+        country: value,
+        department_filter: '',
       }));
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData((prev: any) => ({ ...prev, image: e.target.files[0], current_image_url: '' }));
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setFormData((prev: any) => ({ ...prev, image: files[0], current_image_url: '' }));
     }
   };
 
@@ -199,6 +220,7 @@ const EditEvent = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!token) {
       setError('No estás autenticado.');
       return;
@@ -206,6 +228,30 @@ const EditEvent = () => {
     if (configuredTickets.length === 0) {
       setError("Debes configurar al menos un tipo de boleta.");
       return;
+    }
+    // Validar y normalizar que cada boleta tenga los campos correctos y sean numéricos
+    const normalizedTickets = configuredTickets.map(t => {
+      let ticket_type_id = t.ticket_type_id;
+      // Si viene como objeto, extrae el id
+      if (typeof ticket_type_id === 'object' && ticket_type_id !== null) {
+        ticket_type_id = ticket_type_id.id || ticket_type_id.ticket_type_id || ticket_type_id.ticket_type || ticket_type_id;
+      }
+      ticket_type_id = typeof ticket_type_id === 'number' ? ticket_type_id : parseInt(ticket_type_id, 10);
+      return {
+        ticket_type_id,
+        price: typeof t.price === 'number' ? t.price : parseFloat(t.price),
+        maximun_capacity: typeof t.maximun_capacity === 'number' ? t.maximun_capacity : parseInt(t.maximun_capacity, 10)
+      };
+    });
+    for (const t of normalizedTickets) {
+      if (
+        isNaN(t.ticket_type_id) ||
+        isNaN(t.price) ||
+        isNaN(t.maximun_capacity)
+      ) {
+        setError('Cada boleta debe tener ticket_type_id, price y maximun_capacity correctamente definidos.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -241,6 +287,7 @@ const EditEvent = () => {
       if (formData.location) {
         finalFormData.append('location', formData.location);
       }
+      // NO enviar department_filter al backend
     } else {
       finalFormData.append('city_text', formData.city_text);
       finalFormData.append('department_text', formData.department_text);
@@ -258,7 +305,7 @@ const EditEvent = () => {
     // y el backend mantendrá la imagen existente.
 
     // 5. Lógica de tickets
-    finalFormData.append('ticket_type_json', JSON.stringify(configuredTickets));
+    finalFormData.append('ticket_type_json', JSON.stringify(normalizedTickets));
     // --- FIN DE LA CORRECCIÓN ---
 
     if (formData.image) {
@@ -416,7 +463,7 @@ const EditEvent = () => {
               <>
                 <div>
                   <label htmlFor="department_filter" className="block text-sm font-medium text-gray-700">Departamento</label>
-                  <select name="department_filter" id="department_filter" onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                  <select name="department_filter" id="department_filter" value={formData.department_filter || ''} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                     <option value="">Seleccione un departamento</option>
                     {departments.map((dept: any) => (
                       <option key={dept.id} value={dept.id}>{dept.name}</option>
@@ -502,9 +549,15 @@ const EditEvent = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {configuredTickets.map((ticket: any, index) => {
                       const ticketType = ticketTypes.find((t: any) => t.id == ticket.ticket_type_id);
+                      // Si no se encuentra en el catálogo, intenta mostrar el nombre directo del objeto
+                      let ticketName = ticketType?.ticket_name || ticketType?.name || ticket.ticket_name || ticket.name || ticket.ticket_type || ticket.ticket_type_id || 'Sin nombre';
+                      // Si ticketName es un objeto, extrae el nombre legible
+                      if (typeof ticketName === 'object' && ticketName !== null) {
+                        ticketName = ticketName.ticket_name || ticketName.name || 'Sin nombre';
+                      }
                       return (
                         <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{ticketType ? ticketType.ticket_name : 'ID No encontrado'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{ticketName}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Intl.NumberFormat('es-CO').format(ticket.price)}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Intl.NumberFormat('es-CO').format(ticket.maximun_capacity)}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
